@@ -11,7 +11,7 @@ from src.train.config         import Config
 
 def train(cfg: Config):
 
-    # ── Setup ──────────────────────────────────────────
+    # ── Setup ─────────────────────────────────────────────────
     wandb.init(project=cfg.project_name,
                name=cfg.run_name,
                config=cfg.__dict__)
