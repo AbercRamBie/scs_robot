@@ -36,10 +36,14 @@ def vib_loss(y_pred:  torch.Tensor,
         beta    : IB tradeoff parameter
 
     Returns dict so every term is logged to wandb separately.
+
+    y_pred : (batch, 4) logits
+    y_true : (batch,)   long int class labels
+
     """
     # ── Task loss ────────────────────────────────────────────
-    task_loss = F.binary_cross_entropy_with_logits(
-        y_pred.squeeze(1), y_true
+    task_loss = F.cross_entropy(
+        y_pred, y_true.long()
     )
 
     # ── KL divergence ────────────────────────────────────────

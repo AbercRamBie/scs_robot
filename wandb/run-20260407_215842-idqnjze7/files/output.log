@@ -1,0 +1,58 @@
+Device : cuda
+SNR    : -5.0 dB
+Beta   : 1.0
+Bottleneck dim: 2
+Train batches: 125 | Val batches: 16
+                                                                                                                                                                                                                                                        
+Epoch 001 | Loss: 1.3853 | Task: 1.3850 | KL: 0.0003 | Val Acc: 0.3050
+Epoch 002 | Loss: 1.3829 | Task: 1.3823 | KL: 0.0006 | Val Acc: 0.2960
+Epoch 003 | Loss: 1.3816 | Task: 1.3808 | KL: 0.0007 | Val Acc: 0.3060
+Epoch 004 | Loss: 1.3815 | Task: 1.3811 | KL: 0.0004 | Val Acc: 0.3030
+Epoch 005 | Loss: 1.3805 | Task: 1.3801 | KL: 0.0004 | Val Acc: 0.3020
+Epoch 006 | Loss: 1.3788 | Task: 1.3782 | KL: 0.0006 | Val Acc: 0.3030
+Epoch 007 | Loss: 1.3807 | Task: 1.3802 | KL: 0.0005 | Val Acc: 0.3030
+Epoch 008 | Loss: 1.3809 | Task: 1.3806 | KL: 0.0003 | Val Acc: 0.3030
+Epoch 009 | Loss: 1.3799 | Task: 1.3796 | KL: 0.0003 | Val Acc: 0.3030
+Epoch 010 | Loss: 1.3802 | Task: 1.3800 | KL: 0.0002 | Val Acc: 0.3030
+Epoch 011 | Loss: 1.3797 | Task: 1.3794 | KL: 0.0004 | Val Acc: 0.3030
+Epoch 012 | Loss: 1.3797 | Task: 1.3793 | KL: 0.0003 | Val Acc: 0.3030
+Epoch 013 | Loss: 1.3808 | Task: 1.3807 | KL: 0.0002 | Val Acc: 0.3030
+Epoch 014 | Loss: 1.3797 | Task: 1.3795 | KL: 0.0002 | Val Acc: 0.3030
+Epoch 015 | Loss: 1.3802 | Task: 1.3801 | KL: 0.0001 | Val Acc: 0.3030
+Epoch 016 | Loss: 1.3797 | Task: 1.3796 | KL: 0.0001 | Val Acc: 0.3030
+Epoch 017 | Loss: 1.3797 | Task: 1.3796 | KL: 0.0002 | Val Acc: 0.3030
+Epoch 018 | Loss: 1.3797 | Task: 1.3797 | KL: 0.0000 | Val Acc: 0.3030
+Epoch 019 | Loss: 1.3795 | Task: 1.3795 | KL: 0.0000 | Val Acc: 0.3030
+Epoch 020 | Loss: 1.3798 | Task: 1.3797 | KL: 0.0001 | Val Acc: 0.3030
+Epoch 021 | Loss: 1.3799 | Task: 1.3797 | KL: 0.0002 | Val Acc: 0.3030
+Epoch 022 | Loss: 1.3793 | Task: 1.3793 | KL: 0.0000 | Val Acc: 0.3030
+Epoch 023 | Loss: 1.3795 | Task: 1.3794 | KL: 0.0001 | Val Acc: 0.3030
+Epoch 024 | Loss: 1.3795 | Task: 1.3794 | KL: 0.0001 | Val Acc: 0.3030
+Epoch 025 | Loss: 1.3795 | Task: 1.3794 | KL: 0.0001 | Val Acc: 0.3030
+Epoch 026 | Loss: 1.3796 | Task: 1.3795 | KL: 0.0001 | Val Acc: 0.3030
+Epoch 027 | Loss: 1.3794 | Task: 1.3794 | KL: 0.0000 | Val Acc: 0.3030
+Epoch 028 | Loss: 1.3794 | Task: 1.3793 | KL: 0.0001 | Val Acc: 0.3030
+Epoch 029 | Loss: 1.3794 | Task: 1.3792 | KL: 0.0002 | Val Acc: 0.3030
+Epoch 030 | Loss: 1.3794 | Task: 1.3792 | KL: 0.0001 | Val Acc: 0.3030
+Epoch 031 | Loss: 1.3794 | Task: 1.3793 | KL: 0.0001 | Val Acc: 0.3030
+Epoch 032 | Loss: 1.3791 | Task: 1.3790 | KL: 0.0001 | Val Acc: 0.3030
+Epoch 033 | Loss: 1.3792 | Task: 1.3790 | KL: 0.0002 | Val Acc: 0.3030
+Epoch 034 | Loss: 1.3798 | Task: 1.3797 | KL: 0.0001 | Val Acc: 0.3030
+Epoch 035 | Loss: 1.3794 | Task: 1.3794 | KL: 0.0000 | Val Acc: 0.3030
+Epoch 036 | Loss: 1.3794 | Task: 1.3793 | KL: 0.0000 | Val Acc: 0.3030
+Epoch 037 | Loss: 1.3794 | Task: 1.3794 | KL: 0.0000 | Val Acc: 0.3030
+Epoch 038 | Loss: 1.3796 | Task: 1.3796 | KL: 0.0000 | Val Acc: 0.3030
+Epoch 039 | Loss: 1.3792 | Task: 1.3792 | KL: 0.0000 | Val Acc: 0.3030
+Epoch 040 | Loss: 1.3794 | Task: 1.3794 | KL: 0.0000 | Val Acc: 0.3030
+Epoch 041 | Loss: 1.3794 | Task: 1.3794 | KL: 0.0000 | Val Acc: 0.3030
+Epoch 042 | Loss: 1.3792 | Task: 1.3792 | KL: 0.0000 | Val Acc: 0.3030
+Epoch 043 | Loss: 1.3792 | Task: 1.3792 | KL: 0.0000 | Val Acc: 0.3030
+Epoch 044 | Loss: 1.3792 | Task: 1.3791 | KL: 0.0000 | Val Acc: 0.3030
+Epoch 045 | Loss: 1.3794 | Task: 1.3794 | KL: 0.0000 | Val Acc: 0.3030
+Epoch 046 | Loss: 1.3792 | Task: 1.3792 | KL: 0.0000 | Val Acc: 0.3030
+Epoch 047 | Loss: 1.3791 | Task: 1.3791 | KL: 0.0000 | Val Acc: 0.3030
+Epoch 048 | Loss: 1.3791 | Task: 1.3787 | KL: 0.0004 | Val Acc: 0.3030
+Epoch 049 | Loss: 1.3789 | Task: 1.3787 | KL: 0.0002 | Val Acc: 0.3030
+Epoch 050 | Loss: 1.3800 | Task: 1.3800 | KL: 0.0001 | Val Acc: 0.3030
+
+Best Val Acc: 0.3060

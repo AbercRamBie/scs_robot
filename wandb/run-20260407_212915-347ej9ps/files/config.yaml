@@ -1,0 +1,79 @@
+_wandb:
+    value:
+        cli_version: 0.25.1
+        e:
+            a9fa264mnu2aa6cg3tqwwal90ovdeamt:
+                codePath: run_train.py
+                codePathLocal: run_train.py
+                cpu_count: 16
+                cpu_count_logical: 32
+                cudaVersion: "13.1"
+                disk:
+                    /:
+                        total: "903693619200"
+                        used: "690396139520"
+                email: subashram773@gmail.com
+                executable: /home/zozo/miniconda3/envs/semcomm/bin/python3
+                git:
+                    commit: 81134ce41b6d333d663a5fe25485e070b3e4122b
+                    remote: https://github.com/AbercRamBie/scs_robot.git
+                gpu: NVIDIA GeForce RTX 5090
+                gpu_count: 1
+                gpu_nvidia:
+                    - architecture: Blackwell
+                      cudaCores: 21760
+                      memoryTotal: "34190917632"
+                      name: NVIDIA GeForce RTX 5090
+                      uuid: GPU-d3925c0a-d628-8725-5ff7-2e9799cacf11
+                host: zozo-ai
+                memory:
+                    total: "98641641472"
+                os: Linux-6.17.0-20-generic-x86_64-with-glibc2.39
+                program: /lake/workspaces/subash_ws/scs_robot/run_train.py
+                python: CPython 3.11.15
+                root: /lake/workspaces/subash_ws/scs_robot
+                startedAt: "2026-04-07T20:29:15.461922Z"
+                writerId: a9fa264mnu2aa6cg3tqwwal90ovdeamt
+        m: []
+        python_version: 3.11.15
+        t:
+            "1":
+                - 1
+            "2":
+                - 1
+            "3":
+                - 2
+                - 13
+                - 16
+            "4": 3.11.15
+            "5": 0.25.1
+            "12": 0.25.1
+            "13": linux-x86_64
+batch_size:
+    value: 64
+beta:
+    value: 0.01
+bottleneck_dim:
+    value: 8
+decoder_hidden:
+    value:
+        - 128
+        - 64
+epochs:
+    value: 50
+grid_size:
+    value: 64
+lr:
+    value: 0.001
+n_test:
+    value: 1000
+n_train:
+    value: 8000
+n_val:
+    value: 1000
+project_name:
+    value: semcomm-robot
+run_name:
+    value: 4class_snr5_beta0.01_k8
+snr_db_train:
+    value: 5

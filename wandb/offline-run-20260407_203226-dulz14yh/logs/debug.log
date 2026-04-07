@@ -1,0 +1,23 @@
+2026-04-07 20:32:26,441 INFO    MainThread:309116 [wandb_setup.py:_flush():81] Current SDK version is 0.25.1
+2026-04-07 20:32:26,441 INFO    MainThread:309116 [wandb_setup.py:_flush():81] Configure stats pid to 309116
+2026-04-07 20:32:26,441 INFO    MainThread:309116 [wandb_setup.py:_flush():81] Loading settings from environment variables
+2026-04-07 20:32:26,441 INFO    MainThread:309116 [wandb_init.py:setup_run_log_directory():717] Logging user logs to /lake/workspaces/subash_ws/scs_robot/wandb/offline-run-20260407_203226-dulz14yh/logs/debug.log
+2026-04-07 20:32:26,441 INFO    MainThread:309116 [wandb_init.py:setup_run_log_directory():718] Logging internal logs to /lake/workspaces/subash_ws/scs_robot/wandb/offline-run-20260407_203226-dulz14yh/logs/debug-internal.log
+2026-04-07 20:32:26,441 INFO    MainThread:309116 [wandb_init.py:init():844] calling init triggers
+2026-04-07 20:32:26,441 INFO    MainThread:309116 [wandb_init.py:init():849] wandb.init called with sweep_config: {}
+config: {'grid_size': 64, 'n_train': 8000, 'n_val': 1000, 'n_test': 1000, 'batch_size': 64, 'bottleneck_dim': 4, 'decoder_hidden': [128, 64], 'snr_db_train': 0.0, 'beta': 0.1, 'lr': 0.001, 'epochs': 80, 'project_name': 'semcomm-robot', 'run_name': 'harder_snr0_beta0.1_k4', '_wandb': {}}
+2026-04-07 20:32:26,441 INFO    MainThread:309116 [wandb_init.py:init():892] starting backend
+2026-04-07 20:32:26,699 INFO    MainThread:309116 [wandb_init.py:init():895] sending inform_init request
+2026-04-07 20:32:26,702 INFO    MainThread:309116 [wandb_init.py:init():903] backend started and connected
+2026-04-07 20:32:26,707 INFO    MainThread:309116 [wandb_init.py:init():973] updated telemetry
+2026-04-07 20:32:26,710 INFO    MainThread:309116 [wandb_init.py:init():997] communicating run to backend with 90.0 second timeout
+2026-04-07 20:32:26,808 INFO    MainThread:309116 [wandb_init.py:init():1042] starting run threads in backend
+2026-04-07 20:32:26,848 INFO    MainThread:309116 [wandb_run.py:_console_start():2524] atexit reg
+2026-04-07 20:32:26,848 INFO    MainThread:309116 [wandb_run.py:_redirect():2373] redirect: wrap_raw
+2026-04-07 20:32:26,848 INFO    MainThread:309116 [wandb_run.py:_redirect():2442] Wrapping output streams.
+2026-04-07 20:32:26,848 INFO    MainThread:309116 [wandb_run.py:_redirect():2465] Redirects installed.
+2026-04-07 20:32:26,848 INFO    MainThread:309116 [wandb_init.py:init():1082] run started, returning control to user process
+2026-04-07 20:32:54,763 INFO    MainThread:309116 [wandb_run.py:_finish():2291] finishing run semcomm-robot/dulz14yh
+2026-04-07 20:32:54,764 INFO    MainThread:309116 [wandb_run.py:_atexit_cleanup():2490] got exitcode: 0
+2026-04-07 20:32:54,764 INFO    MainThread:309116 [wandb_run.py:_restore():2472] restore
+2026-04-07 20:32:54,764 INFO    MainThread:309116 [wandb_run.py:_restore():2478] restore done

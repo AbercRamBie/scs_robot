@@ -86,7 +86,7 @@ def train(cfg: Config):
                 Z_hat       = channel(Z)
                 Y_pred      = decoder(Z_hat)
 
-                preds    = (Y_pred.squeeze(1) > 0).float()
+                preds    = Y_pred.argmax(dim=1)
                 correct += (preds == Y).sum().item()
                 total   += Y.size(0)
 

@@ -44,71 +44,99 @@ class OccupancyGridDataset(Dataset):
         self.grids  = torch.tensor(
             np.stack(grids), dtype=torch.float32
         ).unsqueeze(1)
-        self.labels = torch.tensor(labels, dtype=torch.float32)
+        self.labels = torch.tensor(labels, dtype=torch.long)
 
     # ── Map generation ──────────────────────────────────────────
 
     def _generate_map(self, rng, size, min_rooms, max_rooms):
         """
-        Simple room-and-corridor procedural map.
-        Start with all walls, carve out rooms and corridors.
+        Build map guaranteed to have at least one clear corridor.
+        Robot at centre. Corridors carved explicitly in each direction.
+        Obstacles placed only away from the main corridors.
         """
         grid = np.ones((size, size), dtype=np.float32)  # all walls
 
         # Always carve a free space around robot position (centre)
         cx, cy = size // 2, size // 2
-        grid[cx-3:cx+4, cy-3:cy+4] = 0
+        grid[cx-4:cx+5, cy-4:cy+5] = 0
 
-        n_rooms = rng.integers(min_rooms, max_rooms + 1)
+        open_forward = rng.random() > 0.7
+        open_left = rng.random() > 0.65
+        open_right = rng.random() > 0.45
 
-        room_centres = []
+        corridor_w = 3
+
+        if open_forward:
+            # Carve upward corridor from robot to top
+            grid[0:cy, cx-corridor_w:cx+corridor_w+1] = 0
+
+        if open_left:
+            # Carve left corridor from robot to left edge
+            grid[cy-corridor_w:cy+corridor_w+1, 0:cx] = 0 
+
+        if open_right:
+            # Carve right corridor from robot to right edge
+            grid[cy-corridor_w:cy+corridor_w+1, cx:size] = 0
+
+        
+            # ── Add random rooms away from corridor centres ──────────
+        n_rooms = rng.integers(2, 6)
         for _ in range(n_rooms):
-            # Random room position and size
-            rw   = rng.integers(6, 16)
-            rh   = rng.integers(6, 16)
-            rx   = rng.integers(1, size - rw - 1)
-            ry   = rng.integers(1, size - rh - 1)
-            grid[rx:rx+rw, ry:ry+rh] = 0
-            room_centres.append((rx + rw//2, ry + rh//2))
+           rw = rng.integers(5, 12)
+           rh = rng.integers(5, 12)
+           rx = rng.integers(1, size - rw - 1)
+           ry = rng.integers(1, size - rh - 1)
+           grid[rx:rx+rw, ry:ry+rh] = 0
 
-        # Connect rooms with corridors (L-shaped paths)
-        for i in range(len(room_centres) - 1):
-            x1, y1 = room_centres[i]
-            x2, y2 = room_centres[i+1]
-            # Horizontal then vertical
-            min_x, max_x = min(x1, x2), max(x1, x2)
-            min_y, max_y = min(y1, y2), max(y1, y2)
-            grid[min_x:max_x+1, y1] = 0
-            grid[x2, min_y:max_y+1] = 0
+        n_obstacles = rng.integers(10, 25)
+        attempts = 0
+        placed = 0
 
-        # Randomly add scattered obstacles in free space
-        n_obstacles = rng.integers(5, 20)
-        for _ in range(n_obstacles):
-            ox = rng.integers(1, size - 2)
-            oy = rng.integers(1, size - 2)
-            if grid[ox, oy] == 0:            # only in free space
-                grid[ox:ox+2, oy:oy+2] = 1  # small 2x2 block
+        while placed < n_obstacles and attempts < 200:
+            ox = rng.integers(1, size - 3)
+            oy = rng.integers(1, size - 3)
+            attempts += 1
 
+            in_forward = (cx-corridor_w-1 <= oy <= cx+corridor_w+1
+                      and ox < cy - 4)
+            in_left = (cy-corridor_w-1 <= ox <= cy+corridor_w+1
+                      and oy < cx - 4)
+            in_right = (cy-corridor_w-1 <= ox <= cy+corridor_w+1
+                      and oy > cx + 4)
+            in_robot = (cy-5 <= ox <= cy+5 and cx-5 <= oy <= cx+5)
+
+            if not any([in_forward and open_forward,
+                    in_left    and open_left,
+                    in_right   and open_right,
+                    in_robot]):
+                grid[ox:ox+2, oy:oy+2] = 1
+                placed += 1
+                
         # Ensure border is always wall
         grid[0,  :]  = 1
         grid[-1, :]  = 1
         grid[:,  0]  = 1
         grid[:, -1]  = 1
 
+        self._last_corridors = (open_forward, open_left, open_right)
+
         return grid
 
     def _compute_label(self, grid, size):
         """
-        Check if the forward corridor (above robot centre) is clear.
-        Corridor: width 5, from centre to top edge.
-        Label 1 = clear, 0 = blocked.
+        Use the corridor flags set during map generation.
+        Forward takes priority, then left, then right, then stop.
         """
-        cx   = size // 2
-        cy   = size // 2
-        half = 2   # half-width of corridor
+        open_forward, open_left, open_right = self._last_corridors
 
-        corridor = grid[:cy, cx-half:cx+half+1]  # above centre
-        return float(corridor.sum() == 0)         # 1 if fully free
+        if open_forward:
+            return 0.0
+        elif open_left:
+            return 1.0
+        elif open_right:
+            return 2.0
+        else:
+            return 3.0
 
     # ── Dataset interface ───────────────────────────────────────
 
@@ -117,7 +145,6 @@ class OccupancyGridDataset(Dataset):
 
     def __getitem__(self, idx):
         return self.grids[idx], self.labels[idx]
-
 
 def get_dataloaders(n_train:    int = 8000,
                     n_val:      int = 1000,

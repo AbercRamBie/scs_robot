@@ -16,6 +16,7 @@ class SemanticDecoder(nn.Module):
 
     def __init__(self,
                  bottleneck_dim: int = 16,
+                 output_dim:     int = 4,
                  hidden_dims:    list = None):
         super().__init__()
 
@@ -28,8 +29,7 @@ class SemanticDecoder(nn.Module):
             layers.append(nn.Linear(prev, h))
             layers.append(nn.ReLU())
             prev = h
-        layers.append(nn.Linear(prev, 1))   # single logit output
-
+        layers.append(nn.Linear(prev, output_dim))   # single logit output
         self.net = nn.Sequential(*layers)
 
     def forward(self, z_hat: torch.Tensor) -> torch.Tensor:
