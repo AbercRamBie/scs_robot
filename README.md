@@ -1,4 +1,4 @@
-# SCS Robot (Simple Overview)
+# SCS Robot (Simple Overview - Early work)
 
 This project explores **semantic communication for robot navigation**.
 
