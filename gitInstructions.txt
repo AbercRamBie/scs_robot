@@ -1,0 +1,29 @@
+Configure your Git user (run these in your repo directory):
+
+git config --local user.name "AbercRamBie"
+git config --local user.email "subashram773@gmail.com"
+
+Set the remote repository URL:
+
+git remote set-url origin https://github.com/AbercRamBie/scs_robot.git
+
+Verify your configuration:
+
+git config user.name
+git config user.email
+
+Check the current status of your repository:
+
+git status
+
+Stage all changes:
+
+git add .
+
+Commit your changes (edit the message as needed):
+
+git commit -m "some name for the commit"
+
+Push your changes:
+
+git push or git push origin main(if pushing to main branch)
