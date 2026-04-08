@@ -73,7 +73,6 @@ def quantize_and_corrupt(grid, n_bits, snr_db):
     quantized = np.round(grid_np * (levels - 1)) / (levels - 1)
 
     # -- step2 - Compute bit error probability from SNR --
-
     # For BPSK modulation: BER = Q(sqrt(2 * SNR_linear))
     # Q(x) ≈ 0.5 * erfc(x / sqrt(2))
 
@@ -175,7 +174,7 @@ def random_baseline(n_classes=4):
     """Theoretical random baseline — always 1/n_classes."""
     return 1.0 / n_classes
 
-# -- Main--
+# -- Main function--
 
 if __name__ == "__main__":
     
@@ -210,7 +209,6 @@ if __name__ == "__main__":
     }
     with open('/lake/workspaces/subash_ws/scs_robot/results/baseline_comparison.json', 'w') as f:
         json.dump(results, f, indent=2)
-    print("\nSaved to results/baseline_comparison.json")
 
     #plot comparison
 
@@ -233,7 +231,6 @@ if __name__ == "__main__":
                 bbox_inches='tight', dpi=300)
     plt.savefig('/lake/workspaces/subash_ws/scs_robot/results/baseline_comparison.pdf',
                 bbox_inches='tight')
-    print("Saved to results/baseline_comparison.png")
     plt.show()
 
 #endregion

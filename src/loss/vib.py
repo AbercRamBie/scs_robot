@@ -45,12 +45,10 @@ def vib_loss(y_pred:  torch.Tensor,
     task_loss = F.cross_entropy(
         y_pred, y_true.long()
     )
-
     # ── KL divergence ────────────────────────────────────────
     kl_loss = -0.5 * torch.mean(
         1 + log_var - mu.pow(2) - log_var.exp()
     )
-
     # ── Total VIB loss ───────────────────────────────────────
     total = task_loss + beta * kl_loss
 

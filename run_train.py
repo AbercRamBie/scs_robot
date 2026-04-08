@@ -20,13 +20,11 @@ cfg = Config(
 )
 
 encoder, decoder, channel = train(cfg)
-
 os.makedirs('checkpoints', exist_ok=True)
 torch.save(encoder.state_dict(), 'checkpoints/encoder_snr10.pth')
 torch.save(decoder.state_dict(), 'checkpoints/encoder_snr10.pth')
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
 encoder.eval()
 decoder.eval()
 
@@ -39,15 +37,9 @@ _, val_dl, _ = get_dataloaders(
 test_snrs = [-10, -5, 0, 5, 10, 15, 20]
 mismatch_acc = []
 
-print("\nChannel Mismatch Results:")
-print("Train SNR = 10 dB")
-print("-" * 30)
-
 for test_snr in test_snrs:
     channel.set_snr(test_snr)
-
     correct, total = 0,0
-
     with torch.no_grad():
         for X, Y in val_dl:
             X, Y = X.to(device), Y.to(device)
@@ -61,8 +53,6 @@ for test_snr in test_snrs:
 
     acc = correct/total
     mismatch_acc.append(acc)
-    print(f"Test SNR = {test_snr:4d} dB  →  Acc: {acc:.4f}")
-
 os.makedirs('results', exist_ok = True)
 
 results = {
@@ -74,4 +64,3 @@ results = {
 with open('results/mismatch_results.json', 'w') as f:
     json.dump(results, f, indent=2)
 
-print("\nSaved to results/mismatch_results.json")

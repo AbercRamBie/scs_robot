@@ -15,19 +15,13 @@ def train(cfg: Config):
     wandb.init(project=cfg.project_name,
                name=cfg.run_name,
                config=cfg.__dict__)
-
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    print(f"Device : {device}")
-    print(f"SNR    : {cfg.snr_db_train} dB")
-    print(f"Beta   : {cfg.beta}")
-    print(f"Bottleneck dim: {cfg.bottleneck_dim}")
 
     # ── Models ────────────────────────────────────────────────
     encoder = SemanticEncoder(bottleneck_dim=cfg.bottleneck_dim).to(device)
     decoder = SemanticDecoder(bottleneck_dim=cfg.bottleneck_dim,
                               hidden_dims=cfg.decoder_hidden).to(device)
     channel = ChannelLayer(snr_db=cfg.snr_db_train).to(device)
-
     params    = list(encoder.parameters()) + list(decoder.parameters())
     optimizer = optim.Adam(params, lr=cfg.lr)
 
@@ -38,9 +32,6 @@ def train(cfg: Config):
         grid_size  = cfg.grid_size,
         batch_size = cfg.batch_size
     )
-
-    print(f"Train batches: {len(train_dl)} | Val batches: {len(val_dl)}")
-
     best_val_acc = 0.0
 
     for epoch in range(cfg.epochs):
@@ -48,7 +39,6 @@ def train(cfg: Config):
         # ── Train ─────────────────────────────────────────────
         encoder.train()
         decoder.train()
-
         metrics = {"loss": 0.0, "task_loss": 0.0, "kl_loss": 0.0}
 
         for X, Y in tqdm(train_dl, desc=f"Epoch {epoch+1:03d}",
@@ -75,7 +65,6 @@ def train(cfg: Config):
         # ── Validate ──────────────────────────────────────────
         encoder.eval()
         decoder.eval()
-
         correct, total = 0, 0
 
         with torch.no_grad():
@@ -89,7 +78,6 @@ def train(cfg: Config):
                 preds    = Y_pred.argmax(dim=1)
                 correct += (preds == Y).sum().item()
                 total   += Y.size(0)
-
         val_acc = correct / total
         n_bat   = len(train_dl)
 
@@ -104,17 +92,8 @@ def train(cfg: Config):
             "beta":            cfg.beta,
         }
         wandb.log(log)
-
         if val_acc > best_val_acc:
             best_val_acc = val_acc
-
-        print(f"Epoch {epoch+1:03d} | "
-              f"Loss: {metrics['loss']/n_bat:.4f} | "
-              f"Task: {metrics['task_loss']/n_bat:.4f} | "
-              f"KL: {metrics['kl_loss']/n_bat:.4f} | "
-              f"Val Acc: {val_acc:.4f}")
-
-    print(f"\nBest Val Acc: {best_val_acc:.4f}")
     wandb.finish()
 
     return encoder, decoder, channel

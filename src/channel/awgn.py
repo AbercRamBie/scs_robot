@@ -6,7 +6,7 @@ class AWGNChannel(nn.Module):
     Additive White Gaussian Noise channel.
 
     Adds noise calibrated to a target SNR (dB).
-    Signal power is measured from the input — so the
+    Signal power is measured from the input, so the
     noise level adapts to whatever the encoder outputs.
 
     This is the standalone channel used for evaluation.
@@ -24,7 +24,7 @@ class AWGNChannel(nn.Module):
 
     def forward(self, z: torch.Tensor) -> torch.Tensor:
         """
-        z     : transmitted signal, shape (batch, bottleneck_dim)
+        z : transmitted signal, shape (batch, bottleneck_dim)
         return: received signal with AWGN noise, same shape
         """
         signal_power = z.detach().pow(2).mean()

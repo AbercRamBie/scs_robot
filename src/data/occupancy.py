@@ -5,26 +5,23 @@ from torch.utils.data import Dataset, DataLoader
 class OccupancyGridDataset(Dataset):
     """
     Procedurally generated 2D occupancy grids.
-
     Each sample is a 64x64 binary map:
         0 = free space
         1 = occupied (wall / obstacle)
-
     Label Y:
         1 = path ahead is clear (safe)
         0 = path ahead is blocked (obstacle present)
-
     The robot is always at the centre of the map.
     'Path ahead' = a corridor of width 5 cells directly
     above the centre, extending to the top edge.
     If that corridor is fully free → label 1, else label 0.
     """
     def __init__(self,
-                n_samples:  int = 10000,
-                grid_size:  int = 64,
-                min_rooms:  int = 3,
-                max_rooms:  int = 8,
-                seed:       int = 42):
+            n_samples:  int = 10000,
+            grid_size:  int = 64,
+            min_rooms:  int = 3,
+            max_rooms:  int = 8,
+            seed:       int = 42):
         self.n_samples = n_samples
         self.grid_size = grid_size
         rng            = np.random.default_rng(seed)
@@ -43,7 +40,7 @@ class OccupancyGridDataset(Dataset):
         ).unsqueeze(1)
         self.labels = torch.tensor(labels, dtype=torch.long)
 
-    # Map generation
+    #region Map generation
 
     def _generate_map(self, rng, size, min_rooms, max_rooms):
         """
@@ -117,6 +114,8 @@ class OccupancyGridDataset(Dataset):
         self._last_corridors = (open_forward, open_left, open_right)
 
         return grid
+    
+    #endregion
 
     def _compute_label(self, grid, size):
         """
