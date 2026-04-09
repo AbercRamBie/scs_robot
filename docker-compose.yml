@@ -3,7 +3,7 @@ version: '3.8'
 services:
   semcomm:
     build: .
-    image: subash_semcomm:latest
+    image: scs_semscomm:latest
     deploy:
       resources:
         reservations:
