@@ -8,6 +8,7 @@ from src.models.channel_layer import ChannelLayer
 from src.loss.vib             import vib_loss, reparametrize
 from src.data.occupancy       import get_dataloaders
 from src.train.config         import Config
+from src.channel.rayleigh     import RayleighChannel
 
 def train(cfg: Config):
 
@@ -21,7 +22,10 @@ def train(cfg: Config):
     encoder = SemanticEncoder(bottleneck_dim=cfg.bottleneck_dim).to(device)
     decoder = SemanticDecoder(bottleneck_dim=cfg.bottleneck_dim,
                               hidden_dims=cfg.decoder_hidden).to(device)
-    channel = ChannelLayer(snr_db=cfg.snr_db_train).to(device)
+    if cfg.channel_type == "rayleigh":
+       channel = RayleighChannel(snr_db=cfg.snr_db_train).to(device)
+    else:
+       channel = ChannelLayer(snr_db=cfg.snr_db_train).to(device)
     params    = list(encoder.parameters()) + list(decoder.parameters())
     optimizer = optim.Adam(params, lr=cfg.lr)
 

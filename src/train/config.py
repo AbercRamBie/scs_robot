@@ -16,6 +16,7 @@ class Config:
 
     # ── Channel ──────────────────────────────────────────────
     snr_db_train:   float = 10.0
+    channel_type:   str   = "rayleigh"
 
     # ── Training ─────────────────────────────────────────────
     beta:           float = 1e-3

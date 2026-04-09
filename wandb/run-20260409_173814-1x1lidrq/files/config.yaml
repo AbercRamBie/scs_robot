@@ -1,0 +1,81 @@
+_wandb:
+    value:
+        cli_version: 0.25.1
+        e:
+            9f43n837bg3mg5b4d9yvi0kxof0yn0yz:
+                codePath: run_train.py
+                codePathLocal: run_train.py
+                cpu_count: 16
+                cpu_count_logical: 32
+                cudaVersion: "13.1"
+                disk:
+                    /:
+                        total: "903693619200"
+                        used: "726991593472"
+                email: subashram773@gmail.com
+                executable: /home/zozo/miniconda3/envs/semcomm/bin/python3
+                git:
+                    commit: 1536840fd8034a47b42883e79573efd4a4a2cbca
+                    remote: https://github.com/AbercRamBie/scs_robot.git
+                gpu: NVIDIA GeForce RTX 5090
+                gpu_count: 1
+                gpu_nvidia:
+                    - architecture: Blackwell
+                      cudaCores: 21760
+                      memoryTotal: "34190917632"
+                      name: NVIDIA GeForce RTX 5090
+                      uuid: GPU-d3925c0a-d628-8725-5ff7-2e9799cacf11
+                host: zozo-ai
+                memory:
+                    total: "98641637376"
+                os: Linux-6.17.0-20-generic-x86_64-with-glibc2.39
+                program: /lake/workspaces/subash_ws/scs_robot/run_train.py
+                python: CPython 3.11.15
+                root: /lake/workspaces/subash_ws/scs_robot
+                startedAt: "2026-04-09T16:38:14.142097Z"
+                writerId: 9f43n837bg3mg5b4d9yvi0kxof0yn0yz
+        m: []
+        python_version: 3.11.15
+        t:
+            "1":
+                - 1
+            "2":
+                - 1
+            "3":
+                - 2
+                - 13
+                - 16
+            "4": 3.11.15
+            "5": 0.25.1
+            "12": 0.25.1
+            "13": linux-x86_64
+batch_size:
+    value: 64
+beta:
+    value: 0.5
+bottleneck_dim:
+    value: 2
+channel_type:
+    value: rayleigh
+decoder_hidden:
+    value:
+        - 128
+        - 64
+epochs:
+    value: 80
+grid_size:
+    value: 64
+lr:
+    value: 0.0003
+n_test:
+    value: 1000
+n_train:
+    value: 8000
+n_val:
+    value: 1000
+project_name:
+    value: semcomm-robot
+run_name:
+    value: rayleigh_snr_sweep_10dB
+snr_db_train:
+    value: 10

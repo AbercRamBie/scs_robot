@@ -10,18 +10,19 @@ from src.models.decoder import SemanticDecoder
 from src.models.channel_layer import ChannelLayer
 from src.loss.vib import reparametrize
 
-bottleneck_values = [1, 2, 4, 8, 16]
+snr_values = [-10, -5, 0, 5, 10, 15, 20]
 
-for k in bottleneck_values:
+for snr in snr_values:
     cfg = Config(
-        snr_db_train = 5.0,
-        beta = 0.5,
-        bottleneck_dim = k,
-        epochs = 100,
-        lr = 3e-4,
-        run_name = f"bottleneck_sweep_k{k}"
+        snr_db_train   = snr,
+        beta           = 0.5,
+        bottleneck_dim = 2,
+        epochs         = 80,
+        lr             = 3e-4,
+        channel_type   = "rayleigh",
+        run_name       = f"rayleigh_snr_sweep_{snr}dB"
     )
-    print(f"\nTraining with bottleneck_dim = {k}")
+    print(f"\nTraining with Rayleigh channel at SNR = {snr} dB")
     train(cfg)
-    
+
 
