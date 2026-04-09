@@ -1,0 +1,40 @@
+{
+  "os": "Linux-6.17.0-20-generic-x86_64-with-glibc2.39",
+  "python": "CPython 3.11.15",
+  "startedAt": "2026-04-09T16:08:51.184998Z",
+  "program": "/lake/workspaces/subash_ws/scs_robot/run_train.py",
+  "codePath": "run_train.py",
+  "codePathLocal": "run_train.py",
+  "git": {
+    "remote": "https://github.com/AbercRamBie/scs_robot.git",
+    "commit": "73b9e94736a431334bbe77e4398e411e6e026495"
+  },
+  "email": "subashram773@gmail.com",
+  "root": "/lake/workspaces/subash_ws/scs_robot",
+  "host": "zozo-ai",
+  "executable": "/home/zozo/miniconda3/envs/semcomm/bin/python3",
+  "cpu_count": 16,
+  "cpu_count_logical": 32,
+  "gpu": "NVIDIA GeForce RTX 5090",
+  "gpu_count": 1,
+  "disk": {
+    "/": {
+      "total": "903693619200",
+      "used": "726986047488"
+    }
+  },
+  "memory": {
+    "total": "98641637376"
+  },
+  "gpu_nvidia": [
+    {
+      "name": "NVIDIA GeForce RTX 5090",
+      "memoryTotal": "34190917632",
+      "cudaCores": 21760,
+      "architecture": "Blackwell",
+      "uuid": "GPU-d3925c0a-d628-8725-5ff7-2e9799cacf11"
+    }
+  ],
+  "cudaVersion": "13.1",
+  "writerId": "zemqp23cz08tfih47a8td5gogr6k5tuj"
+}
