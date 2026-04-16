@@ -1,0 +1,20 @@
+version: '3.8'
+
+services:
+  semcomm:
+    build: .
+    image: scs_semscomm:latest
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    volumes:
+      - ../artifacts/results:/workspace/results
+      - ../artifacts/checkpoints:/workspace/checkpoints
+      - ../artifacts/wandb:/workspace/wandb
+    environment:
+      - WANDB_MODE=offline
+    command: python run_train.py

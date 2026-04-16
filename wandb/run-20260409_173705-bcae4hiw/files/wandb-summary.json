@@ -1,1 +1,0 @@
-{"_runtime":31,"val_acc":0.477,"beta":0.5,"_timestamp":1.7757526574267147e+09,"snr_db":0,"train/task_loss":1.1641831436157226,"epoch":80,"train/loss":1.3547968244552613,"train/kl_loss":0.38122736287117004,"_step":79,"_wandb":{"runtime":31}}
