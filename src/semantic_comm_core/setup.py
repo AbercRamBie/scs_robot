@@ -1,6 +1,6 @@
 from setuptools import find_packages, setup
 
-package_name = 'ml'
+package_name = 'semcomm_core'
 
 setup(
     name=package_name,
@@ -15,7 +15,7 @@ setup(
     zip_safe=True,
     maintainer='subash',
     maintainer_email='subashram773@gmail.com',
-    description='TODO: Package description',
+    description='Semantic Communication System - core models, training, and evaluation utilities',
     license='Apache-2.0',
     extras_require={
         'test': [
@@ -24,6 +24,7 @@ setup(
     },
     entry_points={
         'console_scripts': [
+            'train_semcomm = semantic_comm_core.run_train:main',
         ],
     },
 )

@@ -1,0 +1,15 @@
+encoder_node:
+  ros__parameters:
+    encoder_checkpoint: /home/subash/DiskD/RoboticsWorks/scs_robot/artifacts/checkpoints/encoder_snr10.pth
+    bottleneck_dim: 2
+    grid_size: 64
+
+decoder_node:
+  ros__parameters:
+    decoder_checkpoint: /home/subash/DiskD/RoboticsWorks/scs_robot/artifacts/checkpoints/decoder_snr10.pth
+    bottleneck_dim: 2
+    output_dim: 4
+
+channel_node:
+  ros__parameters:
+    snr_db: 5.0

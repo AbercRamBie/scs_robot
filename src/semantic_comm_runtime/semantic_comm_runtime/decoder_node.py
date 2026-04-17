@@ -2,23 +2,44 @@ import rclpy
 from rclpy.node import Node
 from std_msgs.msg import Float32MultiArray, Int32
 import torch
-from packages.models.decoder import SemanticDecoder
-import sys
-sys.path.insert(0, '/home/subash/miniconda3/envs/semcomm/lib/python3.11/site-packages')
-sys.path.insert(0, '/home/subash/DiskD/RoboticsWorks/scs_robot/src/ml/ml')
+from semantic_comm_core.decoder import SemanticDecoder
 
 class DecoderNode(Node):
 
     def __init__(self):
         super().__init__('decoder_node')
-        self.device  = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        self.decoder = SemanticDecoder(bottleneck_dim=2, output_dim=4).to(self.device)
+        self.declare_parameter('decoder_checkpoint', '')
+        self.declare_parameter('bottleneck_dim', 2)
+        self.declare_parameter('output_dim', 4)
+
+        checkpoint_path = self.get_parameter(
+            'decoder_checkpoint'
+        ).get_parameter_value().string_value
+        bottleneck_dim = self.get_parameter(
+            'bottleneck_dim'
+        ).get_parameter_value().integer_value
+        output_dim = self.get_parameter(
+            'output_dim'
+        ).get_parameter_value().integer_value
+
+        if not checkpoint_path:
+            raise ValueError(
+                'Parameter decoder_checkpoint is required and must point to a model file.'
+            )
+
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.decoder = SemanticDecoder(
+            bottleneck_dim=int(bottleneck_dim),
+            output_dim=int(output_dim)
+        ).to(self.device)
         self.decoder.load_state_dict(torch.load(
-            '/home/subash/DiskD/RoboticsWorks/scs_robot/artifacts/checkpoints/decoder_snr10.pth',
+            checkpoint_path,
             map_location=self.device
         ))
         self.decoder.eval()
-        self.get_logger().info(f'Decoder loaded on {self.device}')
+        self.get_logger().info(
+            f'Decoder loaded from {checkpoint_path} on {self.device}'
+        )
         self.classes = {0: 'FORWARD', 1: 'LEFT', 2: 'RIGHT', 3: 'STOP'}
         self.sub = self.create_subscription(Float32MultiArray, '/semantic/received', self.callback, 10)
         self.pub = self.create_publisher(Int32, '/semantic/decision', 10)

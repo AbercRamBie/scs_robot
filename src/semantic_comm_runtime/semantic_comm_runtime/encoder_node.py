@@ -4,26 +4,43 @@ from sensor_msgs.msg import LaserScan
 from std_msgs.msg import Float32MultiArray
 import torch
 import numpy as np
-from packages.models.encoder import SemanticEncoder
-from packages.loss.vib import reparametrize
-import sys
-sys.path.insert(0, '/home/subash/miniconda3/envs/semcomm/lib/python3.11/site-packages')
-sys.path.insert(0, '/home/subash/DiskD/RoboticsWorks/scs_robot/src/ml/ml')
+from semantic_comm_core.encoder import SemanticEncoder
+from semantic_comm_core.vib import reparametrize
 
 
 class EncoderNode(Node):
 
     def __init__(self):
         super().__init__('encoder_node')
-        self.device  = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-        self.encoder = SemanticEncoder(bottleneck_dim=2).to(self.device)
+        self.declare_parameter('encoder_checkpoint', '')
+        self.declare_parameter('bottleneck_dim', 2)
+        self.declare_parameter('grid_size', 64)
+
+        checkpoint_path = self.get_parameter(
+            'encoder_checkpoint'
+        ).get_parameter_value().string_value
+        bottleneck_dim = self.get_parameter(
+            'bottleneck_dim'
+        ).get_parameter_value().integer_value
+        self.grid_size = self.get_parameter(
+            'grid_size'
+        ).get_parameter_value().integer_value
+
+        if not checkpoint_path:
+            raise ValueError(
+                'Parameter encoder_checkpoint is required and must point to a model file.'
+            )
+
+        self.device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+        self.encoder = SemanticEncoder(bottleneck_dim=int(bottleneck_dim)).to(self.device)
         self.encoder.load_state_dict(torch.load(
-            '/home/subash/DiskD/RoboticsWorks/scs_robot/artifacts/checkpoints/encoder_snr10.pth',
+            checkpoint_path,
             map_location=self.device
         ))
         self.encoder.eval()
-        self.get_logger().info(f'Encoder loaded on {self.device}')
-        self.grid_size = 64
+        self.get_logger().info(
+            f'Encoder loaded from {checkpoint_path} on {self.device}'
+        )
         self.sub = self.create_subscription(LaserScan, '/scan', self.scan_callback, 10)
         self.pub = self.create_publisher(Float32MultiArray, '/semantic/compressed', 10)
 

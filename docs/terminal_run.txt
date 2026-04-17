@@ -1,0 +1,7 @@
+conda activate semcomm
+source /opt/ros/jazzy/setup.bash
+cd /home/subash/DiskD/RoboticsWorks/scs_robot
+source install/setup.bash
+
+
+Sim run command : ros2 launch semantic_comm_runtime sim.launch.py snr:=5.0

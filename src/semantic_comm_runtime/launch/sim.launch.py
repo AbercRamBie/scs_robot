@@ -2,21 +2,36 @@ from launch import LaunchDescription
 from launch_ros.actions import Node
 from launch.actions import DeclareLaunchArgument, ExecuteProcess, TimerAction
 from launch.substitutions import LaunchConfiguration
+from ament_index_python.packages import get_package_share_directory
 import os
 
 def generate_launch_description():
+    share_dir = get_package_share_directory('semantic_comm_runtime')
+    runtime_config = os.path.join(share_dir, 'config', 'runtime.yaml')
 
-    robot_sdf = os.path.expanduser(
-        '~/DiskD/RoboticsWorks/scs_robot/src/simulation/assets/robot/semantic_robot.sdf'
+    robot_sdf = os.path.join(
+        share_dir, 'assets', 'robot', 'semantic_robot.sdf'
     )
-    world = os.path.expanduser(
-        '~/DiskD/RoboticsWorks/scs_robot/src/simulation/assets/world/semantic_world.sdf'
+    world = os.path.join(
+        share_dir, 'assets', 'world', 'semantic_world.sdf'
     )
 
     snr_arg = DeclareLaunchArgument(
         'snr',
-        default_value='5.0',
+        default_value='',
         description='Channel SNR in dB'
+    )
+
+    encoder_checkpoint_arg = DeclareLaunchArgument(
+        'encoder_checkpoint',
+        default_value='',
+        description='Path to the encoder checkpoint file'
+    )
+
+    decoder_checkpoint_arg = DeclareLaunchArgument(
+        'decoder_checkpoint',
+        default_value='',
+        description='Path to the decoder checkpoint file'
     )
 
     gazebo = ExecuteProcess(
@@ -43,36 +58,54 @@ def generate_launch_description():
     )
 
     encoder = Node(
-        package='simulation',
+        package='semantic_comm_runtime',
         executable='encoder_node',
         name='encoder_node',
-        output='screen'
+        output='screen',
+        parameters=[
+            runtime_config,
+            {
+                'encoder_checkpoint': LaunchConfiguration('encoder_checkpoint')
+            }
+        ]
     )
 
     channel = Node(
-        package='simulation',
+        package='semantic_comm_runtime',
         executable='channel_node',
         name='channel_node',
         output='screen',
-        parameters=[{'snr_db': LaunchConfiguration('snr')}]
+        parameters=[
+            runtime_config,
+            {'snr_db': LaunchConfiguration('snr')}
+        ]
     )
 
     decoder = Node(
-        package='simulation',
+        package='semantic_comm_runtime',
         executable='decoder_node',
         name='decoder_node',
-        output='screen'
+        output='screen',
+        parameters=[
+            runtime_config,
+            {
+                'decoder_checkpoint': LaunchConfiguration('decoder_checkpoint')
+            }
+        ]
     )
 
     nav = Node(
-        package='simulation',
+        package='semantic_comm_runtime',
         executable='nav_node',
         name='nav_node',
-        output='screen'
+        output='screen',
+        parameters=[runtime_config]
     )
 
     return LaunchDescription([
         snr_arg,
+        encoder_checkpoint_arg,
+        decoder_checkpoint_arg,
         gazebo,
         spawn_robot,
         encoder,

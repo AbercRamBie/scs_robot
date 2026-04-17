@@ -2,7 +2,7 @@ from setuptools import find_packages, setup
 import os
 from glob import glob
 
-package_name = 'simulation'
+package_name = 'semantic_comm_runtime'
 
 setup(
     name=package_name,
@@ -14,6 +14,8 @@ setup(
         ('share/' + package_name, ['package.xml']),
         (os.path.join('share', package_name, 'launch'),
             glob('launch/*.py')),
+        (os.path.join('share', package_name, 'config'),
+            glob('config/*.yaml')),
         (os.path.join('share', package_name, 'assets/world'),
             glob('assets/world/*.sdf')),
         (os.path.join('share', package_name, 'assets/robot'),
@@ -30,10 +32,10 @@ setup(
     },
     entry_points={
         'console_scripts': [
-            'encoder_node = simulation.encoder_node:main',
-            'channel_node = simulation.channel_node:main',
-            'decoder_node = simulation.decoder_node:main',
-            'nav_node     = simulation.nav_node:main',
+            'encoder_node = semantic_comm_runtime.encoder_node:main',
+            'channel_node = semantic_comm_runtime.channel_node:main',
+            'decoder_node = semantic_comm_runtime.decoder_node:main',
+            'nav_node     = semantic_comm_runtime.nav_node:main',
         ],
     },
 )

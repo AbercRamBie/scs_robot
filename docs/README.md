@@ -2,6 +2,8 @@
 
 Architecture blueprint: see ../ARCHITECTURE.md for a compartmentalized target layout and migration order.
 
+Detailed ROS 2 migration steps: see ./ROS2_MIGRATION_GUIDE.md.
+
 This project explores **semantic communication for robot navigation**.
 
 In plain words: instead of sending a full map over a noisy channel, the model learns a compact representation that keeps only task-relevant information for navigation decisions.
