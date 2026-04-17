@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 
-
 class ChannelLayer(nn.Module):
     """
     Differentiable AWGN channel layer.

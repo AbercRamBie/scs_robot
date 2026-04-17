@@ -1,7 +1,7 @@
 <?xml version="1.0" ?>
 <sdf version="1.8">
-  <model name="semantic_robot">
-    <pose>0 0 0.1 0 0 0</pose>
+  <model name="sero">
+    <pose>-4.0 -3.5 0.1 0 0 0</pose>
 
     <!-- Base -->
     <link name="base_link">
@@ -19,8 +19,8 @@
           <cylinder><radius>0.18</radius><length>0.08</length></cylinder>
         </geometry>
         <material>
-          <ambient>0.1 0.1 0.8 1</ambient>
-          <diffuse>0.1 0.1 0.8 1</diffuse>
+          <ambient>1.0 1.0 0.0 1</ambient>
+          <diffuse>1.0 1.0 0.0 1</diffuse>
         </material>
       </visual>
 

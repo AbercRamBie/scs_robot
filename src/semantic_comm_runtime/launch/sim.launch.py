@@ -13,7 +13,7 @@ def generate_launch_description():
         share_dir, 'assets', 'robot', 'semantic_robot.sdf'
     )
     world = os.path.join(
-        share_dir, 'assets', 'world', 'semantic_world.sdf'
+        share_dir, 'assets', 'world', 'world_Basic.sdf'
     )
 
     snr_arg = DeclareLaunchArgument(
