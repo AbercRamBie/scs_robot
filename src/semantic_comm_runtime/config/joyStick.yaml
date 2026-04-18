@@ -1,0 +1,9 @@
+joy_control_node:
+  ros__parameters:
+    axis_linear: 1
+    axis_angular: 3
+    scale_linear: 0.4
+    scale_angular: 1.0
+    deadzone: 0.05
+    require_enable_button: true
+    enable_button_index: 4
