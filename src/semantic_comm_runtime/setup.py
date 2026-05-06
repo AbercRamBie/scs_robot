@@ -36,6 +36,8 @@ setup(
             'channel_node = semantic_comm_runtime.channel_node:main',
             'decoder_node = semantic_comm_runtime.decoder_node:main',
             'nav_node     = semantic_comm_runtime.nav_node:main',
-                'joy_control_node = semantic_comm_runtime.joy_control_node:main',            'robot_driver_node = semantic_comm_runtime.robot_driver_node:main',        ],
+            'joy_control_node = semantic_comm_runtime.joy_control_node:main',            
+            'robot_driver_node = semantic_comm_runtime.robot_driver_node:main',        
+            'vision_node = semantic_comm_runtime.vision_node:main',],
     },
 )

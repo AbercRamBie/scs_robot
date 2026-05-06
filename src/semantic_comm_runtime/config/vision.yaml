@@ -1,0 +1,10 @@
+hsv_lower:
+  h: 0
+  s: 0
+  v: 0
+hsv_upper:
+  h: 179
+  s: 255
+  v: 255
+area_threshold: 500
+camera_id: 0
