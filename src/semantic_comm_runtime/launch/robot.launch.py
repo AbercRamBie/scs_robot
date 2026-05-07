@@ -8,40 +8,80 @@ import os
 
 def generate_launch_description():
     share_dir = get_package_share_directory('semantic_comm_runtime')
-    joystick_config = os.path.join(share_dir, 'config', 'joyStick.yaml')
+    runtime_config = os.path.join(share_dir, 'config', 'runtime.yaml')
 
-    robot_serial_port_arg = DeclareLaunchArgument(
+    # ── Launch arguments ──────────────────────────────────────────────────────
+    serial_port_arg = DeclareLaunchArgument(
         'robot_serial_port',
         default_value='/dev/ttyUSB0',
-        description='Serial port for robot communication'
+        description='Serial port the Arduino is connected to'
     )
-
-    robot_serial_baud_arg = DeclareLaunchArgument(
+    serial_baud_arg = DeclareLaunchArgument(
         'robot_serial_baud',
-        default_value='115200',
-        description='Serial baud rate for robot'
+        default_value='9600',
+        description='Baud rate – must match Serial.begin() in Arduino sketch'
+    )
+    camera_id_arg = DeclareLaunchArgument(
+        'camera_id',
+        default_value='0',
+        description='Camera device index'
+    )
+    show_windows_arg = DeclareLaunchArgument(
+        'show_debug_windows',
+        default_value='false',
+        description='Set true to open OpenCV tracking windows (requires display)'
+    )
+    snr_arg = DeclareLaunchArgument(
+        'snr_db',
+        default_value='5.0',
+        description='Simulated channel SNR in dB'
     )
 
-    robot_radius_arg = DeclareLaunchArgument(
-        'robot_radius',
-        default_value='0.15',
-        description='Robot radius in meters (from center to wheel contact point)'
-    )
+    # ── Nodes ─────────────────────────────────────────────────────────────────
 
-    joy_node = Node(
-        package='joy',
-        executable='joy_node',
-        name='joy_node',
-        output='screen',
-        parameters=[{'dev': '/dev/input/js0', 'autorepeat_rate': 20.0}]
-    )
-
-    joy_control = Node(
+    vision = Node(
         package='semantic_comm_runtime',
-        executable='joy_control_node',
-        name='joy_control_node',
+        executable='vision_node',
+        name='vision_node',
         output='screen',
-        parameters=[joystick_config]
+        parameters=[{
+            'camera_id': LaunchConfiguration('camera_id'),
+            'show_debug_windows': LaunchConfiguration('show_debug_windows'),
+        }]
+    )
+
+    encoder = Node(
+        package='semantic_comm_runtime',
+        executable='encoder_node',
+        name='encoder_node',
+        output='screen',
+        parameters=[runtime_config]
+    )
+
+    channel = Node(
+        package='semantic_comm_runtime',
+        executable='channel_node',
+        name='channel_node',
+        output='screen',
+        parameters=[
+            runtime_config,
+            {'snr_db': LaunchConfiguration('snr_db')},
+        ]
+    )
+
+    decoder = Node(
+        package='semantic_comm_runtime',
+        executable='decoder_node',
+        name='decoder_node',
+        output='screen',
+        parameters=[runtime_config]
+    )
+
+    nav = Node(
+        package='semantic_comm_runtime',
+        executable='nav_node',
+        name='nav_node',
+        output='screen',
     )
 
     robot_driver = Node(
@@ -49,18 +89,22 @@ def generate_launch_description():
         executable='robot_driver_node',
         name='robot_driver_node',
         output='screen',
-        parameters=[
-            {'robot_serial_port': LaunchConfiguration('robot_serial_port')},
-            {'robot_serial_baud': LaunchConfiguration('robot_serial_baud')},
-            {'robot_radius': LaunchConfiguration('robot_radius')},
-        ]
+        parameters=[{
+            'robot_serial_port': LaunchConfiguration('robot_serial_port'),
+            'robot_serial_baud': LaunchConfiguration('robot_serial_baud'),
+        }]
     )
 
     return LaunchDescription([
-        robot_serial_port_arg,
-        robot_serial_baud_arg,
-        robot_radius_arg,
-        joy_node,
-        joy_control,
+        serial_port_arg,
+        serial_baud_arg,
+        camera_id_arg,
+        show_windows_arg,
+        snr_arg,
+        vision,
+        encoder,
+        channel,
+        decoder,
+        nav,
         robot_driver,
     ])

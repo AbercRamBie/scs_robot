@@ -395,12 +395,17 @@ class VisionNode(Node):
             cv2.imshow('Obstacle Mask', vertical_mask)
             key = cv2.waitKey(1) & 0xFF
             self.handle_keyboard(key)
+            if not rclpy.ok():
+                return
 
         msg = Float32MultiArray()
         msg.data = [float(c) for centroid in centroids for c in centroid]
-        self.pub_centroids.publish(msg)
-
-        self.pub_image.publish(self.bridge.cv2_to_imgmsg(vis, 'bgr8'))
+        try:
+            if rclpy.ok():
+                self.pub_centroids.publish(msg)
+                self.pub_image.publish(self.bridge.cv2_to_imgmsg(vis, 'bgr8'))
+        except Exception as e:
+            self.get_logger().warn(f'Publish skipped during shutdown: {e}')
 
     def handle_keyboard(self, key):
         if key == ord('a'):

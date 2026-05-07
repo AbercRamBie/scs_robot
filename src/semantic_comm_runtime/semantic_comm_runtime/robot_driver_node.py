@@ -9,6 +9,7 @@ import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Twist
 import serial
+import time
 
 
 class ThreeWheelRobotDriver(Node):
@@ -38,6 +39,11 @@ class ThreeWheelRobotDriver(Node):
         self.ser = None
         try:
             self.ser = serial.Serial(self.serial_port, self.baud, timeout=1.0)
+            # Opening the serial port often resets Arduino-class boards.
+            # Give the sketch time to boot before sending motion commands.
+            time.sleep(2.0)
+            self.ser.reset_input_buffer()
+            self.ser.reset_output_buffer()
             self.get_logger().info(f'Connected to robot on {self.serial_port} @ {self.baud} baud')
         except Exception as e:
             self.get_logger().warn(f'Serial connection failed: {e}. Running in simulation mode.')
@@ -46,6 +52,7 @@ class ThreeWheelRobotDriver(Node):
         self.cmd_vel_sub = self.create_subscription(
             Twist, '/cmd_vel', self.cmd_vel_callback, 10
         )
+        self.serial_poll_timer = self.create_timer(0.1, self._poll_serial_feedback)
 
         self.get_logger().info('Three-wheel robot driver ready')
 
@@ -65,7 +72,7 @@ class ThreeWheelRobotDriver(Node):
         else:
             char_cmd = 'B'          # backward
 
-        self.get_logger().debug(f'cmd_vel → {char_cmd!r}  (vx={vx:.2f}, ω={omega:.2f})')
+        self.get_logger().info(f'cmd_vel -> {char_cmd!r}  (vx={vx:.2f}, omega={omega:.2f})')
         self._send_char(char_cmd)
 
     def _send_char(self, char_cmd: str):
@@ -73,11 +80,30 @@ class ThreeWheelRobotDriver(Node):
         if self.ser and self.ser.is_open:
             try:
                 self.ser.write(char_cmd.encode())
-                self.get_logger().debug(f'Sent: {char_cmd!r}')
+                self.get_logger().info(f'Sent serial command: {char_cmd!r}')
             except Exception as e:
                 self.get_logger().warn(f'Serial write failed: {e}')
         else:
             self.get_logger().info(f'[SIM] Motor command: {char_cmd!r}')
+
+    def _poll_serial_feedback(self):
+        """Read and log any Arduino feedback bytes without blocking control."""
+        if not (self.ser and self.ser.is_open):
+            return
+        try:
+            waiting = self.ser.in_waiting
+            if waiting <= 0:
+                return
+            raw = self.ser.read(waiting)
+            text = raw.decode(errors='ignore').strip()
+            if text:
+                # Handle multi-line chunks from the Arduino serial prints.
+                for line in text.splitlines():
+                    line = line.strip()
+                    if line:
+                        self.get_logger().info(f'Arduino: {line}')
+        except Exception as e:
+            self.get_logger().warn(f'Serial read failed: {e}')
     
     def destroy_node(self):
         """Clean up on shutdown."""
