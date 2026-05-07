@@ -8,6 +8,7 @@ Adapt the send_motor_command() method to your actual hardware interface.
 import rclpy
 from rclpy.node import Node
 from geometry_msgs.msg import Twist
+from std_msgs.msg import Int32
 import serial
 import time
 
@@ -52,6 +53,8 @@ class ThreeWheelRobotDriver(Node):
         self.cmd_vel_sub = self.create_subscription(
             Twist, '/cmd_vel', self.cmd_vel_callback, 10
         )
+        # Publish ultrasonic distance (mm) read from Arduino serial stream
+        self.ultrasonic_pub = self.create_publisher(Int32, '/ultrasonic/distance', 10)
         self.serial_poll_timer = self.create_timer(0.1, self._poll_serial_feedback)
 
         self.get_logger().info('Three-wheel robot driver ready')
@@ -100,7 +103,17 @@ class ThreeWheelRobotDriver(Node):
                 # Handle multi-line chunks from the Arduino serial prints.
                 for line in text.splitlines():
                     line = line.strip()
-                    if line:
+                    if not line:
+                        continue
+                    if line.startswith('DIST:'):
+                        try:
+                            dist_mm = int(line[5:])
+                            msg = Int32()
+                            msg.data = dist_mm
+                            self.ultrasonic_pub.publish(msg)
+                        except ValueError:
+                            pass
+                    else:
                         self.get_logger().info(f'Arduino: {line}')
         except Exception as e:
             self.get_logger().warn(f'Serial read failed: {e}')

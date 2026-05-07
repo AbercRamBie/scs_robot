@@ -2,7 +2,7 @@ import os
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image
-from std_msgs.msg import Float32MultiArray
+from std_msgs.msg import Float32MultiArray, Int32
 from cv_bridge import CvBridge
 import cv2
 import numpy as np
@@ -29,6 +29,8 @@ class VisionNode(Node):
         self.declare_parameter('frame_height', 480)
         self.declare_parameter('fps', 30)
         self.declare_parameter('show_debug_windows', False)
+        self.declare_parameter('decision_center_deadband', 80)
+        self.declare_parameter('ignore_obstacles', True)
 
         camera_id = self.get_parameter('camera_id').value
         camera_device = self.get_parameter('camera_device').value
@@ -36,6 +38,8 @@ class VisionNode(Node):
         frame_height = self.get_parameter('frame_height').value
         fps = self.get_parameter('fps').value
         self.show_debug_windows = self.get_parameter('show_debug_windows').value
+        self.decision_center_deadband = self.get_parameter('decision_center_deadband').value
+        self.ignore_obstacles = self.get_parameter('ignore_obstacles').value
 
         # On headless systems (e.g. SSH into Orin Nano) there is no display.
         # Disable windows automatically so the node doesn't crash.
@@ -57,6 +61,7 @@ class VisionNode(Node):
 
         self.pub_centroids = self.create_publisher(Float32MultiArray, '/vision/centroids', 10)
         self.pub_image = self.create_publisher(Image, '/vision/processed', 10)
+        self.pub_decision = self.create_publisher(Int32, '/semantic/decision', 10)
 
         self.tick_freq = cv2.getTickFrequency()
         self.prev_tick = cv2.getTickCount()
@@ -74,6 +79,7 @@ class VisionNode(Node):
         self.merge_center_gap = 58.0
 
         self.is_fullscreen = False
+        self.last_decision = None
         if self.show_debug_windows:
             cv2.namedWindow('Object Detection', cv2.WINDOW_NORMAL)
             cv2.resizeWindow('Object Detection', 960, 540)
@@ -236,6 +242,22 @@ class VisionNode(Node):
         obstacle_mask = cv2.dilate(edges, kernel, iterations=2)
         obstacle_mask = cv2.morphologyEx(obstacle_mask, cv2.MORPH_CLOSE, kernel, iterations=3)
         return gray, obstacle_mask
+
+    def compute_decision(self, centroids, frame_width):
+        if self.ignore_obstacles:
+            return 0
+
+        if not centroids:
+            return 0
+
+        target_x, _ = max(centroids, key=lambda centroid: centroid[1])
+        center_x = 0.5 * frame_width
+
+        if target_x < center_x - self.decision_center_deadband:
+            return 2
+        if target_x > center_x + self.decision_center_deadband:
+            return 1
+        return 3
 
     def process_frame(self):
         ret, frame = self.cap.read()
@@ -400,10 +422,18 @@ class VisionNode(Node):
 
         msg = Float32MultiArray()
         msg.data = [float(c) for centroid in centroids for c in centroid]
+        decision = self.compute_decision(centroids, w_frame)
+        decision_msg = Int32()
+        decision_msg.data = int(decision)
         try:
             if rclpy.ok():
                 self.pub_centroids.publish(msg)
+                self.pub_decision.publish(decision_msg)
                 self.pub_image.publish(self.bridge.cv2_to_imgmsg(vis, 'bgr8'))
+                if decision != self.last_decision:
+                    labels = {0: 'FORWARD', 1: 'LEFT', 2: 'RIGHT', 3: 'STOP'}
+                    self.get_logger().info(f'Decision: {decision} ({labels[decision]})')
+                    self.last_decision = decision
         except Exception as e:
             self.get_logger().warn(f'Publish skipped during shutdown: {e}')
 
