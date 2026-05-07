@@ -1,3 +1,4 @@
+import os
 import rclpy
 from rclpy.node import Node
 from sensor_msgs.msg import Image
@@ -35,6 +36,15 @@ class VisionNode(Node):
         frame_height = self.get_parameter('frame_height').value
         fps = self.get_parameter('fps').value
         self.show_debug_windows = self.get_parameter('show_debug_windows').value
+
+        # On headless systems (e.g. SSH into Orin Nano) there is no display.
+        # Disable windows automatically so the node doesn't crash.
+        if self.show_debug_windows and not os.environ.get('DISPLAY'):
+            self.get_logger().warn(
+                '$DISPLAY is not set — debug windows disabled. '
+                'Connect a monitor or run with X forwarding (ssh -X) to enable them.'
+            )
+            self.show_debug_windows = False
 
         cv2.setUseOptimized(True)
 
