@@ -23,26 +23,27 @@ class VisionNode(Node):
         super().__init__('vision_node')
 
         self.declare_parameter('camera_id', 0)
+        self.declare_parameter('camera_device', '')   # e.g. '/dev/video0'
         self.declare_parameter('frame_width', 640)
         self.declare_parameter('frame_height', 480)
         self.declare_parameter('fps', 30)
         self.declare_parameter('show_debug_windows', False)
 
         camera_id = self.get_parameter('camera_id').value
+        camera_device = self.get_parameter('camera_device').value
         frame_width = self.get_parameter('frame_width').value
         frame_height = self.get_parameter('frame_height').value
         fps = self.get_parameter('fps').value
         self.show_debug_windows = self.get_parameter('show_debug_windows').value
 
         cv2.setUseOptimized(True)
-        self.cap = cv2.VideoCapture(camera_id)
-        self.cap.set(cv2.CAP_PROP_FRAME_WIDTH, frame_width)
-        self.cap.set(cv2.CAP_PROP_FRAME_HEIGHT, frame_height)
-        self.cap.set(cv2.CAP_PROP_FPS, fps)
-        self.bridge = CvBridge()
 
-        if not self.cap.isOpened():
-            self.get_logger().error('Could not open camera.')
+        # On Jetson platforms the default GStreamer backend often fails for USB
+        # webcams.  Explicitly request V4L2 and fall back to auto-detect.
+        source = camera_device if camera_device else camera_id
+        self.cap = self._open_camera(source, frame_width, frame_height, fps)
+
+        self.bridge = CvBridge()
 
         self.pub_centroids = self.create_publisher(Float32MultiArray, '/vision/centroids', 10)
         self.pub_image = self.create_publisher(Image, '/vision/processed', 10)
@@ -71,6 +72,37 @@ class VisionNode(Node):
 
         self.timer = self.create_timer(1.0 / float(max(1, fps)), self.process_frame)
         self.get_logger().info('Vision Node Started')
+
+    def _open_camera(self, source, width, height, fps):
+        """Try V4L2 backend first (required on Jetson), then fall back to auto."""
+        backends = [cv2.CAP_V4L2, cv2.CAP_ANY]
+        cap = None
+        for backend in backends:
+            attempt = cv2.VideoCapture(source, backend)
+            if attempt.isOpened():
+                attempt.set(cv2.CAP_PROP_FRAME_WIDTH, width)
+                attempt.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
+                attempt.set(cv2.CAP_PROP_FPS, fps)
+                # Verify we can actually read a frame
+                ok, _ = attempt.read()
+                if ok:
+                    self.get_logger().info(
+                        f'Camera opened: source={source!r} backend={backend}'
+                    )
+                    cap = attempt
+                    break
+                attempt.release()
+
+        if cap is None or not cap.isOpened():
+            msg = (
+                f'Failed to open camera source={source!r}. '
+                'Check that the device is connected and not in use by another process. '
+                'Try setting the camera_device parameter to /dev/video0 (or video1, etc.).'
+            )
+            self.get_logger().fatal(msg)
+            raise RuntimeError(msg)
+
+        return cap
 
     @staticmethod
     def iou_xywh(a, b):
