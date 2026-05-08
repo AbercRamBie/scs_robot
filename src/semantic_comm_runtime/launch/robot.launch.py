@@ -6,7 +6,6 @@ from launch_ros.actions import Node
 from ament_index_python.packages import get_package_share_directory
 import os
 
-
 def generate_launch_description():
     share_dir = get_package_share_directory('semantic_comm_runtime')
     runtime_config = os.path.join(share_dir, 'config', 'runtime.yaml')

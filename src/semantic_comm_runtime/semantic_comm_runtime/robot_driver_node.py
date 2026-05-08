@@ -11,7 +11,7 @@ from geometry_msgs.msg import Twist
 from std_msgs.msg import Int32
 import serial
 import time
-
+import re
 
 class ThreeWheelRobotDriver(Node):
     """
@@ -55,6 +55,7 @@ class ThreeWheelRobotDriver(Node):
         )
         # Publish ultrasonic distance (mm) read from Arduino serial stream
         self.ultrasonic_pub = self.create_publisher(Int32, '/ultrasonic/distance', 10)
+        self._serial_rx_buffer = bytearray()
         self.serial_poll_timer = self.create_timer(0.1, self._poll_serial_feedback)
 
         self.get_logger().info('Three-wheel robot driver ready')
@@ -90,7 +91,7 @@ class ThreeWheelRobotDriver(Node):
             self.get_logger().info(f'[SIM] Motor command: {char_cmd!r}')
 
     def _poll_serial_feedback(self):
-        """Read and log any Arduino feedback bytes without blocking control."""
+        """Read serial feedback and parse ultrasonic distance from text lines when possible."""
         if not (self.ser and self.ser.is_open):
             return
         try:
@@ -98,23 +99,32 @@ class ThreeWheelRobotDriver(Node):
             if waiting <= 0:
                 return
             raw = self.ser.read(waiting)
-            text = raw.decode(errors='ignore').strip()
-            if text:
-                # Handle multi-line chunks from the Arduino serial prints.
-                for line in text.splitlines():
-                    line = line.strip()
-                    if not line:
+            self._serial_rx_buffer.extend(raw)
+
+            # Process complete newline-terminated records only.
+            while b'\n' in self._serial_rx_buffer:
+                line_bytes, _, remainder = self._serial_rx_buffer.partition(b'\n')
+                self._serial_rx_buffer = bytearray(remainder)
+                line_bytes = line_bytes.strip(b'\r ')
+                if not line_bytes:
+                    continue
+
+                # First try text parsing for formats like "DIST:235" or "distance=235".
+                line_text = line_bytes.decode('ascii', errors='ignore').strip()
+                if line_text:
+                    dist_match = re.search(r'(?:DIST|distance)\s*[:=]\s*(-?\d+)', line_text, re.IGNORECASE)
+                    if dist_match:
+                        dist_mm = int(dist_match.group(1))
+                        msg = Int32()
+                        msg.data = dist_mm
+                        self.ultrasonic_pub.publish(msg)
+                        self.get_logger().info(f'Ultrasonic parsed: {dist_mm} mm')
                         continue
-                    if line.startswith('DIST:'):
-                        try:
-                            dist_mm = int(line[5:])
-                            msg = Int32()
-                            msg.data = dist_mm
-                            self.ultrasonic_pub.publish(msg)
-                        except ValueError:
-                            pass
-                    else:
-                        self.get_logger().info(f'Arduino: {line}')
+                    self.get_logger().info(f'Arduino: {line_text}')
+                    continue
+
+                # If not text, print the binary frame in hex so protocol can be decoded.
+                self.get_logger().info(f'Arduino binary frame: {line_bytes.hex(" ")}')
         except Exception as e:
             self.get_logger().warn(f'Serial read failed: {e}')
     
@@ -124,14 +134,12 @@ class ThreeWheelRobotDriver(Node):
             self.ser.close()
         super().destroy_node()
 
-
 def main(args=None):
     rclpy.init(args=args)
     node = ThreeWheelRobotDriver()
     rclpy.spin(node)
     node.destroy_node()
     rclpy.shutdown()
-
 
 if __name__ == '__main__':
     main()
