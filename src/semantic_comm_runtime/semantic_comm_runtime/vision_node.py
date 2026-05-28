@@ -1,490 +1,454 @@
-import os
+import json
+from collections import defaultdict
+from pathlib import Path
+
+import cv2
 import rclpy
+import torch
+from cv_bridge import CvBridge
 from rclpy.node import Node
 from sensor_msgs.msg import Image
-from std_msgs.msg import Float32MultiArray, Int32
-from cv_bridge import CvBridge
-import cv2
-import numpy as np
-from dataclasses import dataclass
+from std_msgs.msg import Bool
+from ultralytics import YOLO
 
-
-@dataclass
-class Track:
-    id: int
-    x: float
-    y: float
-    w: float
-    h: float
-    misses: int = 0
-    hits: int = 1
 
 class VisionNode(Node):
     def __init__(self):
         super().__init__('vision_node')
 
-        self.declare_parameter('camera_id', 0)
-        self.declare_parameter('camera_device', '')   # e.g. '/dev/video0'
-        self.declare_parameter('frame_width', 640)
-        self.declare_parameter('frame_height', 480)
-        self.declare_parameter('fps', 30)
-        self.declare_parameter('show_debug_windows', False)
-        self.declare_parameter('decision_center_deadband', 80)
-        self.declare_parameter('ignore_obstacles', True)
+        self.declare_parameter(
+            'scan_root',
+            '/home/subash/manual_perceptionPipeline/manual_scans'
+        )
+        self.declare_parameter('video_file', 'full_circle_video.avi')
+        self.declare_parameter('model_name', 'yolo26n-seg.pt')
+        self.declare_parameter('conf_threshold', 0.50)
+        self.declare_parameter('frame_skip', 5)
+        self.declare_parameter('output_fps', 6)
+        self.declare_parameter('show_preview', False)
+        self.declare_parameter('publish_preview_topic', '/vision/processed')
+        self.declare_parameter('use_origin_from_metadata', True)
+        self.declare_parameter('origin_yaw_offset_deg', 0.0)
+        self.declare_parameter('origin_frame_id', 'map')
 
-        camera_id = self.get_parameter('camera_id').value
-        camera_device = self.get_parameter('camera_device').value
-        frame_width = self.get_parameter('frame_width').value
-        frame_height = self.get_parameter('frame_height').value
-        fps = self.get_parameter('fps').value
-        self.show_debug_windows = self.get_parameter('show_debug_windows').value
-        self.decision_center_deadband = self.get_parameter('decision_center_deadband').value
-        self.ignore_obstacles = self.get_parameter('ignore_obstacles').value
+        self.declare_parameter(
+            'allowed_classes',
+            [
+                'person',
+                'chair',
+                'couch',
+                'bed',
+                'tv',
+                'laptop',
+                'keyboard',
+                'mouse',
+                'book',
+                'backpack',
+                'bottle',
+                'cup',
+                'potted plant',
+            ],
+        )
 
-        # On headless systems (e.g. SSH into Orin Nano) there is no display.
-        # Disable windows automatically so the node doesn't crash.
-        if self.show_debug_windows and not os.environ.get('DISPLAY'):
-            self.get_logger().warn(
-                '$DISPLAY is not set — debug windows disabled. '
-                'Connect a monitor or run with X forwarding (ssh -X) to enable them.'
-            )
-            self.show_debug_windows = False
+        self.declare_parameter(
+            'blocked_classes',
+            [
+                'refrigerator',
+                'oven',
+                'microwave',
+                'toilet',
+                'sink',
+            ],
+        )
 
-        cv2.setUseOptimized(True)
+        self.scan_root = Path(str(self.get_parameter('scan_root').value))
+        self.video_file = str(self.get_parameter('video_file').value)
+        self.model_name = str(self.get_parameter('model_name').value)
+        self.conf_threshold = float(self.get_parameter('conf_threshold').value)
+        self.frame_skip = int(self.get_parameter('frame_skip').value)
+        self.output_fps = int(self.get_parameter('output_fps').value)
+        self.show_preview = bool(self.get_parameter('show_preview').value)
+        self.preview_topic = str(self.get_parameter('publish_preview_topic').value)
+        self.use_origin_from_metadata = bool(
+            self.get_parameter('use_origin_from_metadata').value
+        )
+        self.origin_yaw_offset_deg = float(
+            self.get_parameter('origin_yaw_offset_deg').value
+        )
+        self.origin_frame_id = str(self.get_parameter('origin_frame_id').value)
 
-        # On Jetson platforms the default GStreamer backend often fails for USB
-        # webcams.  Explicitly request V4L2 and fall back to auto-detect.
-        source = camera_device if camera_device else camera_id
-        self.cap = self._open_camera(source, frame_width, frame_height, fps)
+        self.allowed_classes = set(self.get_parameter('allowed_classes').value)
+        self.blocked_classes = set(self.get_parameter('blocked_classes').value)
+
+        if self.frame_skip <= 0:
+            self.get_logger().warn('frame_skip must be > 0. Falling back to 1.')
+            self.frame_skip = 1
+
+        if self.output_fps <= 0:
+            self.get_logger().warn('output_fps must be > 0. Falling back to 6.')
+            self.output_fps = 6
+
+        self.device = 0 if torch.cuda.is_available() else 'cpu'
+        self.use_half = bool(torch.cuda.is_available())
 
         self.bridge = CvBridge()
+        self.preview_pub = self.create_publisher(Image, self.preview_topic, 10)
+        self.done_pub = self.create_publisher(Bool, '/vision/yolo_done', 10)
 
-        self.pub_centroids = self.create_publisher(Float32MultiArray, '/vision/centroids', 10)
-        self.pub_image = self.create_publisher(Image, '/vision/processed', 10)
-        self.pub_decision = self.create_publisher(Int32, '/semantic/decision', 10)
-
-        self.tick_freq = cv2.getTickFrequency()
-        self.prev_tick = cv2.getTickCount()
-        self.fps_smooth = 0.0
-
-        self.tracks = []
-        self.next_track_id = 1
-        self.max_misses = 8
-
-        self.alpha_pos = 0.27
-        self.alpha_size = 0.22
-        self.match_iou_min = 0.10
-        self.match_dist_max = 95.0
-        self.merge_iou = 0.14
-        self.merge_center_gap = 58.0
-
-        self.is_fullscreen = False
-        self.last_decision = None
-        if self.show_debug_windows:
-            cv2.namedWindow('Object Detection', cv2.WINDOW_NORMAL)
-            cv2.resizeWindow('Object Detection', 960, 540)
-            cv2.namedWindow('Obstacle Mask', cv2.WINDOW_NORMAL)
-            cv2.resizeWindow('Obstacle Mask', 960, 540)
-
-        self.timer = self.create_timer(1.0 / float(max(1, fps)), self.process_frame)
-        self.get_logger().info('Vision Node Started')
-
-    def _open_camera(self, source, width, height, fps):
-        """Try V4L2 backend first (required on Jetson), then fall back to auto."""
-        backends = [cv2.CAP_V4L2, cv2.CAP_ANY]
-        cap = None
-        for backend in backends:
-            attempt = cv2.VideoCapture(source, backend)
-            if attempt.isOpened():
-                attempt.set(cv2.CAP_PROP_FRAME_WIDTH, width)
-                attempt.set(cv2.CAP_PROP_FRAME_HEIGHT, height)
-                attempt.set(cv2.CAP_PROP_FPS, fps)
-                # Verify we can actually read a frame
-                ok, _ = attempt.read()
-                if ok:
-                    self.get_logger().info(
-                        f'Camera opened: source={source!r} backend={backend}'
-                    )
-                    cap = attempt
-                    break
-                attempt.release()
-
-        if cap is None or not cap.isOpened():
-            msg = (
-                f'Failed to open camera source={source!r}. '
-                'Check that the device is connected and not in use by another process. '
-                'Try setting the camera_device parameter to /dev/video0 (or video1, etc.).'
-            )
-            self.get_logger().fatal(msg)
-            raise RuntimeError(msg)
-
-        return cap
+        # Run once after node starts; this node is batch-style, not continuous.
+        self.started = False
+        self.timer = self.create_timer(0.1, self._run_once)
 
     @staticmethod
-    def iou_xywh(a, b):
-        ax1, ay1, aw, ah = a
-        bx1, by1, bw, bh = b
-        ax2, ay2 = ax1 + aw, ay1 + ah
-        bx2, by2 = bx1 + bw, by1 + bh
+    def yaw_to_direction(yaw_deg):
+        directions = [
+            'front',
+            'front_right',
+            'right',
+            'back_right',
+            'back',
+            'back_left',
+            'left',
+            'front_left',
+        ]
 
-        ix1 = max(ax1, bx1)
-        iy1 = max(ay1, by1)
-        ix2 = min(ax2, bx2)
-        iy2 = min(ay2, by2)
+        index = int(((yaw_deg + 22.5) % 360) // 45)
+        return directions[index]
 
-        iw = max(0.0, ix2 - ix1)
-        ih = max(0.0, iy2 - iy1)
-        inter = iw * ih
-        if inter <= 0.0:
+    def get_latest_scan_dir(self):
+        scan_dirs = [
+            path for path in self.scan_root.glob('manual_video_scan_*')
+            if path.is_dir()
+        ]
+
+        if not scan_dirs:
+            raise FileNotFoundError(
+                f'No manual_video_scan_* folders found in {self.scan_root}'
+            )
+
+        return max(scan_dirs, key=lambda path: path.stat().st_mtime)
+
+    @staticmethod
+    def load_metadata(scan_dir):
+        metadata_path = scan_dir / 'metadata.json'
+
+        if not metadata_path.exists():
+            return None
+
+        with open(metadata_path, 'r', encoding='utf-8') as f:
+            return json.load(f)
+
+    @staticmethod
+    def estimate_yaw_from_frame(frame_index, total_frames):
+        if total_frames <= 0:
             return 0.0
 
-        union = aw * ah + bw * bh - inter
-        return inter / union if union > 0.0 else 0.0
+        return (frame_index / total_frames) * 360.0
 
-    @staticmethod
-    def center_distance(a, b):
-        ax, ay, aw, ah = a
-        bx, by, bw, bh = b
-        acx = ax + 0.5 * aw
-        acy = ay + 0.5 * ah
-        bcx = bx + 0.5 * bw
-        bcy = by + 0.5 * bh
-        return abs(acx - bcx) + abs(acy - bcy)
-
-    def merge_close_boxes(self, boxes, iou_threshold=0.2, center_gap_threshold=34.0):
-        if not boxes:
-            return []
-
-        merged = [tuple(map(int, b)) for b in boxes]
-        changed = True
-        while changed:
-            changed = False
-            out = []
-            used = [False] * len(merged)
-
-            for i in range(len(merged)):
-                if used[i]:
-                    continue
-                x1, y1, w1, h1 = merged[i]
-                used[i] = True
-
-                for j in range(i + 1, len(merged)):
-                    if used[j]:
-                        continue
-                    x2, y2, w2, h2 = merged[j]
-
-                    should_merge = (
-                        self.iou_xywh((x1, y1, w1, h1), (x2, y2, w2, h2)) >= iou_threshold
-                        or self.center_distance((x1, y1, w1, h1), (x2, y2, w2, h2)) <= center_gap_threshold
-                    )
-
-                    if should_merge:
-                        nx1 = min(x1, x2)
-                        ny1 = min(y1, y2)
-                        nx2 = max(x1 + w1, x2 + w2)
-                        ny2 = max(y1 + h1, y2 + h2)
-                        x1, y1, w1, h1 = nx1, ny1, nx2 - nx1, ny2 - ny1
-                        used[j] = True
-                        changed = True
-
-                out.append((x1, y1, w1, h1))
-
-            merged = out
-
-        return merged
-
-    def suppress_nested_boxes(self, boxes, overlap_keep_threshold=0.85):
-        if not boxes:
-            return []
-
-        keep = [True] * len(boxes)
-        areas = [w * h for (_, _, w, h) in boxes]
-
-        for i, bi in enumerate(boxes):
-            if not keep[i]:
-                continue
-            xi, yi, wi, hi = bi
-            ai = max(1, areas[i])
-            for j, bj in enumerate(boxes):
-                if i == j or not keep[j]:
-                    continue
-                xj, yj, wj, hj = bj
-                aj = max(1, areas[j])
-
-                ix1 = max(xi, xj)
-                iy1 = max(yi, yj)
-                ix2 = min(xi + wi, xj + wj)
-                iy2 = min(yi + hi, yj + hj)
-                iw = max(0, ix2 - ix1)
-                ih = max(0, iy2 - iy1)
-                inter = iw * ih
-                if inter <= 0:
-                    continue
-
-                overlap_i = inter / ai
-                overlap_j = inter / aj
-
-                if overlap_i >= overlap_keep_threshold and ai < aj:
-                    keep[i] = False
-                    break
-                if overlap_j >= overlap_keep_threshold and aj < ai:
-                    keep[j] = False
-
-        return [b for k, b in zip(keep, boxes) if k]
-
-    @staticmethod
-    def preprocess_for_obstacles(frame_bgr):
-        gray = cv2.cvtColor(frame_bgr, cv2.COLOR_BGR2GRAY)
-        gray = cv2.equalizeHist(gray)
-        blur = cv2.GaussianBlur(gray, (5, 5), 0)
-        edges = cv2.Canny(blur, 60, 140)
-        kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (5, 5))
-        obstacle_mask = cv2.dilate(edges, kernel, iterations=2)
-        obstacle_mask = cv2.morphologyEx(obstacle_mask, cv2.MORPH_CLOSE, kernel, iterations=3)
-        return gray, obstacle_mask
-
-    def compute_decision(self, centroids, frame_width):
-        if self.ignore_obstacles:
-            return 0
-
-        if not centroids:
-            return 0
-
-        target_x, _ = max(centroids, key=lambda centroid: centroid[1])
-        center_x = 0.5 * frame_width
-
-        if target_x < center_x - self.decision_center_deadband:
-            return 2
-        if target_x > center_x + self.decision_center_deadband:
-            return 1
-        return 3
-
-    def process_frame(self):
-        ret, frame = self.cap.read()
-        if not ret:
+    def _run_once(self):
+        if self.started:
             return
 
-        frame_width = self.get_parameter('frame_width').value
-        frame_height = self.get_parameter('frame_height').value
-        frame = cv2.resize(frame, (frame_width, frame_height), interpolation=cv2.INTER_LINEAR)
-        vis = frame.copy()
+        self.started = True
 
-        _, obstacle_mask = self.preprocess_for_obstacles(frame)
-
-        vertical_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3, 21))
-        vertical_mask = cv2.morphologyEx(obstacle_mask, cv2.MORPH_OPEN, vertical_kernel)
-
-        connect_kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (19, 11))
-        vertical_mask = cv2.morphologyEx(vertical_mask, cv2.MORPH_CLOSE, connect_kernel, iterations=1)
-
-        contours, _ = cv2.findContours(vertical_mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-
-        raw_boxes = []
-        frame_area = frame.shape[0] * frame.shape[1]
-        min_area = max(1400, int(frame_area * 0.006))
-        for cnt in contours:
-            if cv2.contourArea(cnt) < min_area:
-                continue
-            x, y, bw, bh = cv2.boundingRect(cnt)
-            if bh <= int(1.15 * bw):
-                continue
-            raw_boxes.append((x, y, bw, bh))
-
-        detections = self.merge_close_boxes(
-            raw_boxes,
-            iou_threshold=self.merge_iou,
-            center_gap_threshold=self.merge_center_gap,
-        )
-        detections = self.suppress_nested_boxes(detections)
-
-        candidates = []
-        for ti, tr in enumerate(self.tracks):
-            tbox = (tr.x, tr.y, tr.w, tr.h)
-            for di, det in enumerate(detections):
-                dbox = tuple(float(v) for v in det)
-                ov = self.iou_xywh(tbox, dbox)
-                dist = self.center_distance(tbox, dbox)
-                if ov > self.match_iou_min or dist < self.match_dist_max:
-                    score = ov - 0.0015 * dist
-                    candidates.append((score, ti, di))
-        candidates.sort(reverse=True, key=lambda x: x[0])
-
-        matched_tracks = set()
-        matched_dets = set()
-        for _, ti, di in candidates:
-            if ti in matched_tracks or di in matched_dets:
-                continue
-            tr = self.tracks[ti]
-            dx, dy, dw, dh = detections[di]
-
-            tr.x = tr.x + self.alpha_pos * (dx - tr.x)
-            tr.y = tr.y + self.alpha_pos * (dy - tr.y)
-            tr.w = tr.w + self.alpha_size * (dw - tr.w)
-            tr.h = tr.h + self.alpha_size * (dh - tr.h)
-
-            if abs(dx - tr.x) < 1.0:
-                tr.x = round(tr.x)
-            if abs(dy - tr.y) < 1.0:
-                tr.y = round(tr.y)
-
-            tr.misses = 0
-            tr.hits += 1
-
-            matched_tracks.add(ti)
-            matched_dets.add(di)
-
-        for ti, tr in enumerate(self.tracks):
-            if ti not in matched_tracks:
-                tr.misses += 1
-
-        for di, det in enumerate(detections):
-            if di in matched_dets:
-                continue
-            x, y, w_box, h_box = det
-            self.tracks.append(Track(id=self.next_track_id, x=float(x), y=float(y), w=float(w_box), h=float(h_box)))
-            self.next_track_id += 1
-
-        self.tracks = [tr for tr in self.tracks if tr.misses <= self.max_misses]
-
-        h_frame, w_frame = vis.shape[:2]
-        centroids = []
-        visible_count = 0
-        for tr in self.tracks:
-            if tr.hits < 2:
-                continue
-
-            sx = int(max(0, min(w_frame - 2, tr.x)))
-            sy = int(max(0, min(h_frame - 2, tr.y)))
-            sw = int(max(2, min(w_frame - sx - 1, tr.w)))
-            sh = int(max(2, min(h_frame - sy - 1, tr.h)))
-
-            if tr.misses > 0:
-                color = (0, 190, 255)
-                label = f'Object #{tr.id} (hold)'
-            else:
-                color = (0, 255, 0)
-                label = f'Object #{tr.id}'
-
-            cv2.rectangle(vis, (sx, sy), (sx + sw, sy + sh), color, 2)
-            cv2.putText(vis, label, (sx, max(15, sy - 8)), cv2.FONT_HERSHEY_SIMPLEX, 0.5, color, 1)
-
-            cx = sx + sw // 2
-            cy = sy + sh // 2
-            centroids.append([cx, cy])
-            visible_count += 1
-
-        now_tick = cv2.getTickCount()
-        dt = (now_tick - self.prev_tick) / self.tick_freq
-        self.prev_tick = now_tick
-        instant_fps = 1.0 / dt if dt > 0 else 0.0
-        self.fps_smooth = 0.9 * self.fps_smooth + 0.1 * instant_fps if self.fps_smooth > 0 else instant_fps
-
-        h, w = vis.shape[:2]
-        cv2.putText(vis, f'Objects: {visible_count}', (15, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 255, 0), 2)
-        cv2.putText(vis, f'FPS: {self.fps_smooth:.1f}', (w - 110, 30), cv2.FONT_HERSHEY_SIMPLEX, 0.65, (255, 255, 255), 2)
-
-        hud_y = h - 80
-        cv2.putText(
-            vis,
-            f'a/z pos:{self.alpha_pos:.2f}  s/x size:{self.alpha_size:.2f}  d/c miss:{self.max_misses}',
-            (12, hud_y),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.48,
-            (220, 220, 220),
-            1,
-        )
-        cv2.putText(
-            vis,
-            f'g/b mergeIOU:{self.merge_iou:.2f}  h/n mergeGap:{self.merge_center_gap:.0f}  j/m matchDist:{self.match_dist_max:.0f}',
-            (12, hud_y + 20),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.48,
-            (220, 220, 220),
-            1,
-        )
-        cv2.putText(
-            vis,
-            'r reset tracks  f fullscreen  q quit',
-            (12, hud_y + 40),
-            cv2.FONT_HERSHEY_SIMPLEX,
-            0.48,
-            (220, 220, 220),
-            1,
-        )
-
-        if self.show_debug_windows:
-            cv2.imshow('Object Detection', vis)
-            cv2.imshow('Obstacle Mask', vertical_mask)
-            key = cv2.waitKey(1) & 0xFF
-            self.handle_keyboard(key)
-            if not rclpy.ok():
-                return
-
-        msg = Float32MultiArray()
-        msg.data = [float(c) for centroid in centroids for c in centroid]
-        decision = self.compute_decision(centroids, w_frame)
-        decision_msg = Int32()
-        decision_msg.data = int(decision)
         try:
-            if rclpy.ok():
-                self.pub_centroids.publish(msg)
-                self.pub_decision.publish(decision_msg)
-                self.pub_image.publish(self.bridge.cv2_to_imgmsg(vis, 'bgr8'))
-                if decision != self.last_decision:
-                    labels = {0: 'FORWARD', 1: 'LEFT', 2: 'RIGHT', 3: 'STOP'}
-                    self.get_logger().info(f'Decision: {decision} ({labels[decision]})')
-                    self.last_decision = decision
-        except Exception as e:
-            self.get_logger().warn(f'Publish skipped during shutdown: {e}')
-
-    def handle_keyboard(self, key):
-        if key == ord('a'):
-            self.alpha_pos = min(0.90, self.alpha_pos + 0.02)
-        if key == ord('z'):
-            self.alpha_pos = max(0.05, self.alpha_pos - 0.02)
-        if key == ord('s'):
-            self.alpha_size = min(0.90, self.alpha_size + 0.02)
-        if key == ord('x'):
-            self.alpha_size = max(0.05, self.alpha_size - 0.02)
-        if key == ord('d'):
-            self.max_misses = min(30, self.max_misses + 1)
-        if key == ord('c'):
-            self.max_misses = max(0, self.max_misses - 1)
-        if key == ord('g'):
-            self.merge_iou = min(0.90, self.merge_iou + 0.02)
-        if key == ord('b'):
-            self.merge_iou = max(0.01, self.merge_iou - 0.02)
-        if key == ord('h'):
-            self.merge_center_gap = min(120.0, self.merge_center_gap + 2.0)
-        if key == ord('n'):
-            self.merge_center_gap = max(4.0, self.merge_center_gap - 2.0)
-        if key == ord('j'):
-            self.match_dist_max = min(220.0, self.match_dist_max + 4.0)
-        if key == ord('m'):
-            self.match_dist_max = max(20.0, self.match_dist_max - 4.0)
-        if key == ord('r'):
-            self.tracks.clear()
-        if key == ord('f'):
-            self.is_fullscreen = not self.is_fullscreen
-            mode = cv2.WINDOW_FULLSCREEN if self.is_fullscreen else cv2.WINDOW_NORMAL
-            cv2.setWindowProperty('Object Detection', cv2.WND_PROP_FULLSCREEN, mode)
-            if not self.is_fullscreen:
-                cv2.resizeWindow('Object Detection', 960, 540)
-        if key == ord('q'):
+            self.process_latest_scan()
+        except Exception as exc:
+            self.get_logger().error(f'Vision processing failed: {exc}')
+        finally:
+            done_msg = Bool()
+            done_msg.data = True
+            self.done_pub.publish(done_msg)
             rclpy.shutdown()
 
-    def destroy_node(self):
-        self.cap.release()
-        if self.show_debug_windows:
+    def process_latest_scan(self):
+        scan_dir = self.get_latest_scan_dir()
+        self.get_logger().info(f'Using latest scan folder: {scan_dir}')
+
+        video_path = scan_dir / self.video_file
+        if not video_path.exists():
+            self.get_logger().error(f'Video file not found: {video_path}')
+            return
+
+        metadata = self.load_metadata(scan_dir)
+
+        origin_reference = {}
+        if isinstance(metadata, dict):
+            origin_reference = metadata.get('origin_reference', {}) or {}
+
+        metadata_origin_yaw = float(origin_reference.get('yaw_deg', 0.0))
+
+        if self.use_origin_from_metadata:
+            origin_yaw_world_deg = metadata_origin_yaw
+        else:
+            origin_yaw_world_deg = self.origin_yaw_offset_deg
+
+        origin_frame = str(origin_reference.get('frame_id', self.origin_frame_id))
+
+        self.get_logger().info(
+            f'Origin heading reference: frame={origin_frame}, '
+            f'yaw_offset={origin_yaw_world_deg:.2f} deg, '
+            f'use_metadata={self.use_origin_from_metadata}'
+        )
+
+        self.get_logger().info('Loading YOLO model...')
+        model = YOLO(self.model_name)
+
+        self.get_logger().info(f'Using device: {self.device}')
+        if self.device != 'cpu':
+            self.get_logger().info(f'GPU name: {torch.cuda.get_device_name(0)}')
+        else:
+            self.get_logger().warn(
+                'CUDA GPU not available. YOLO will run on CPU.'
+            )
+
+        cap = cv2.VideoCapture(str(video_path))
+        if not cap.isOpened():
+            self.get_logger().error(f'Failed to open video: {video_path}')
+            return
+
+        total_frames = int(cap.get(cv2.CAP_PROP_FRAME_COUNT))
+        video_fps = cap.get(cv2.CAP_PROP_FPS)
+
+        self.get_logger().info(f'Video: {video_path}')
+        self.get_logger().info(f'Total frames: {total_frames}')
+        self.get_logger().info(f'Original video FPS: {video_fps}')
+        self.get_logger().info(f'Processing every {self.frame_skip} frames')
+        self.get_logger().info(f'Annotated output FPS: {self.output_fps}')
+
+        detections_by_direction = defaultdict(lambda: defaultdict(int))
+        detections_by_class = defaultdict(int)
+        frame_results = []
+
+        output_video_path = scan_dir / 'yolo_annotated_video.avi'
+        output_json_path = scan_dir / 'yolo_scene_summary.json'
+
+        fourcc = cv2.VideoWriter_fourcc(*'XVID')
+        writer = None
+
+        frame_index = 0
+        processed_count = 0
+
+        while True:
+            ret, frame = cap.read()
+
+            if not ret:
+                break
+
+            if frame_index % self.frame_skip != 0:
+                frame_index += 1
+                continue
+
+            yaw_deg = self.estimate_yaw_from_frame(frame_index, total_frames)
+            direction_relative = self.yaw_to_direction(yaw_deg)
+            yaw_world_deg = (origin_yaw_world_deg + yaw_deg) % 360.0
+            direction_world = self.yaw_to_direction(yaw_world_deg)
+
+            results = model.predict(
+                source=frame,
+                conf=self.conf_threshold,
+                device=self.device,
+                half=self.use_half,
+                verbose=False,
+            )
+
+            detected_objects = []
+            annotated_frame = frame.copy()
+
+            for result in results:
+                annotated_frame = result.plot()
+
+                for box in result.boxes:
+                    class_id = int(box.cls[0])
+                    confidence = float(box.conf[0])
+                    class_name = model.names[class_id]
+
+                    if class_name in self.blocked_classes:
+                        continue
+
+                    if class_name not in self.allowed_classes:
+                        continue
+
+                    detected_objects.append(
+                        {
+                            'class_name': class_name,
+                            'confidence': round(confidence, 3),
+                        }
+                    )
+
+                    detections_by_direction[direction_world][class_name] += 1
+                    detections_by_class[class_name] += 1
+
+            unique_objects = sorted(
+                list({obj['class_name'] for obj in detected_objects})
+            )
+
+            cv2.putText(
+                annotated_frame,
+                f'Yaw rel: {yaw_deg:.1f} deg ({direction_relative})',
+                (20, 40),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.8,
+                (0, 255, 255),
+                2,
+            )
+
+            cv2.putText(
+                annotated_frame,
+                f'Yaw world: {yaw_world_deg:.1f} deg ({direction_world}) [{origin_frame}]',
+                (20, 75),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.65,
+                (255, 255, 255),
+                2,
+            )
+
+            cv2.putText(
+                annotated_frame,
+                f'Frame: {frame_index} | Objects: {len(unique_objects)}',
+                (20, 110),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                0.65,
+                (255, 255, 255),
+                2,
+            )
+
+            if writer is None:
+                h, w = annotated_frame.shape[:2]
+
+                writer = cv2.VideoWriter(
+                    str(output_video_path),
+                    fourcc,
+                    self.output_fps,
+                    (w, h),
+                )
+
+                if not writer.isOpened():
+                    self.get_logger().error('Failed to open output video writer')
+                    cap.release()
+                    return
+
+            writer.write(annotated_frame)
+
+            if self.show_preview:
+                cv2.imshow('YOLO 360 Processing', annotated_frame)
+                key = cv2.waitKey(1) & 0xFF
+                if key == ord('q'):
+                    self.get_logger().info('Stopped manually by user.')
+                    break
+
+            self.preview_pub.publish(
+                self.bridge.cv2_to_imgmsg(annotated_frame, 'bgr8')
+            )
+
+            frame_results.append(
+                {
+                    'frame_index': frame_index,
+                    'estimated_yaw_deg_relative': round(yaw_deg, 2),
+                    'estimated_yaw_deg_world': round(yaw_world_deg, 2),
+                    'direction_relative': direction_relative,
+                    'direction_world': direction_world,
+                    'origin_frame_id': origin_frame,
+                    'objects': unique_objects,
+                    'detections': detected_objects,
+                }
+            )
+
+            self.get_logger().info(
+                f'Frame {frame_index:05d} | '
+                f'Yaw rel {yaw_deg:6.1f} / world {yaw_world_deg:6.1f} | '
+                f'{direction_world:12s} | '
+                f'{unique_objects}'
+            )
+
+            processed_count += 1
+            frame_index += 1
+
+        cap.release()
+
+        if writer is not None:
+            writer.release()
+
+        if self.show_preview:
             cv2.destroyAllWindows()
+
+        summary = {
+            'scan_type': 'yolo_360_video_semantic_summary',
+            'source_video': self.video_file,
+            'model': self.model_name,
+            'confidence_threshold': self.conf_threshold,
+            'frame_skip': self.frame_skip,
+            'output_fps': self.output_fps,
+            'total_video_frames': total_frames,
+            'processed_frames': processed_count,
+            'angle_method': 'frame_index_based_estimation',
+            'origin_reference': {
+                'frame_id': origin_frame,
+                'yaw_offset_deg': round(origin_yaw_world_deg, 3),
+                'used_metadata': self.use_origin_from_metadata,
+            },
+            'note': (
+                'Relative yaw is estimated assuming the video covers one full '
+                '360 degree rotation from start to end. World yaw adds origin yaw offset.'
+            ),
+            'object_frequency_global': dict(
+                sorted(
+                    detections_by_class.items(),
+                    key=lambda item: item[1],
+                    reverse=True,
+                )
+            ),
+            'direction_summary': {},
+            'frames': frame_results,
+        }
+
+        for direction, object_counts in detections_by_direction.items():
+            summary['direction_summary'][direction] = dict(
+                sorted(
+                    object_counts.items(),
+                    key=lambda item: item[1],
+                    reverse=True,
+                )
+            )
+
+        with open(output_json_path, 'w', encoding='utf-8') as f:
+            json.dump(summary, f, indent=2)
+
+        self.get_logger().info('YOLO processing complete.')
+        self.get_logger().info(f'Saved summary: {output_json_path}')
+        self.get_logger().info(f'Saved annotated video: {output_video_path}')
+
+        self.get_logger().info('Global object frequency:')
+        for obj, count in summary['object_frequency_global'].items():
+            self.get_logger().info(f'  {obj}: {count}')
+
+        self.get_logger().info('Direction summary:')
+        for direction, objects in summary['direction_summary'].items():
+            self.get_logger().info(f'  {direction}: {objects}')
+
+    def destroy_node(self):
+        if self.show_preview:
+            cv2.destroyAllWindows()
+
         super().destroy_node()
+
 
 def main(args=None):
     rclpy.init(args=args)
-    node = VisionNode()
-    rclpy.spin(node)
-    node.destroy_node()
-    rclpy.shutdown()
+    node = None
+
+    try:
+        node = VisionNode()
+        rclpy.spin(node)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        if node is not None:
+            node.destroy_node()
+
+        if rclpy.ok():
+            rclpy.shutdown()
+
 
 if __name__ == '__main__':
     main()

@@ -1,0 +1,92 @@
+{
+  "scan_type": "manual_360_video_capture",
+  "video_file": "full_circle_video.avi",
+  "frame_angle_log": "frame_angles.json",
+  "frames_dir": "frames",
+  "save_angle_frames": true,
+  "frame_save_angle_step_deg": 30,
+  "saved_angle_frames": [
+    {
+      "yaw_deg": 0,
+      "frame_index": 0,
+      "time_sec": 0.05,
+      "image": "frames/frame_000_deg.png"
+    },
+    {
+      "yaw_deg": 30,
+      "frame_index": 33,
+      "time_sec": 1.7,
+      "image": "frames/frame_030_deg.png"
+    },
+    {
+      "yaw_deg": 60,
+      "frame_index": 66,
+      "time_sec": 3.35,
+      "image": "frames/frame_060_deg.png"
+    },
+    {
+      "yaw_deg": 90,
+      "frame_index": 100,
+      "time_sec": 5.05,
+      "image": "frames/frame_090_deg.png"
+    },
+    {
+      "yaw_deg": 120,
+      "frame_index": 133,
+      "time_sec": 6.7,
+      "image": "frames/frame_120_deg.png"
+    },
+    {
+      "yaw_deg": 150,
+      "frame_index": 166,
+      "time_sec": 8.349,
+      "image": "frames/frame_150_deg.png"
+    },
+    {
+      "yaw_deg": 180,
+      "frame_index": 200,
+      "time_sec": 10.05,
+      "image": "frames/frame_180_deg.png"
+    },
+    {
+      "yaw_deg": 210,
+      "frame_index": 233,
+      "time_sec": 11.699,
+      "image": "frames/frame_210_deg.png"
+    },
+    {
+      "yaw_deg": 240,
+      "frame_index": 266,
+      "time_sec": 13.35,
+      "image": "frames/frame_240_deg.png"
+    },
+    {
+      "yaw_deg": 270,
+      "frame_index": 300,
+      "time_sec": 15.049,
+      "image": "frames/frame_270_deg.png"
+    },
+    {
+      "yaw_deg": 300,
+      "frame_index": 333,
+      "time_sec": 16.7,
+      "image": "frames/frame_300_deg.png"
+    },
+    {
+      "yaw_deg": 330,
+      "frame_index": 366,
+      "time_sec": 18.35,
+      "image": "frames/frame_330_deg.png"
+    }
+  ],
+  "frame_width": 640,
+  "frame_height": 480,
+  "fps": 20,
+  "frame_count": 453,
+  "start_delay_sec": 5.0,
+  "target_rotation_time_sec": 20.0,
+  "actual_recording_duration_sec": 22.664,
+  "angle_estimation_method": "time_based_estimation",
+  "rotation_note": "estimated yaw assumes constant manual rotation speed",
+  "stopped_manually": true
+}

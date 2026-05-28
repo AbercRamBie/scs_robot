@@ -1,0 +1,67 @@
+{
+  "scan_type": "manual_camera_rotation",
+  "num_views": 12,
+  "angle_step_deg": 30,
+  "views": [
+    {
+      "index": 0,
+      "yaw_deg": 0,
+      "image": "view_000_deg.png"
+    },
+    {
+      "index": 1,
+      "yaw_deg": 30,
+      "image": "view_030_deg.png"
+    },
+    {
+      "index": 2,
+      "yaw_deg": 60,
+      "image": "view_060_deg.png"
+    },
+    {
+      "index": 3,
+      "yaw_deg": 90,
+      "image": "view_090_deg.png"
+    },
+    {
+      "index": 4,
+      "yaw_deg": 120,
+      "image": "view_120_deg.png"
+    },
+    {
+      "index": 5,
+      "yaw_deg": 150,
+      "image": "view_150_deg.png"
+    },
+    {
+      "index": 6,
+      "yaw_deg": 180,
+      "image": "view_180_deg.png"
+    },
+    {
+      "index": 7,
+      "yaw_deg": 210,
+      "image": "view_210_deg.png"
+    },
+    {
+      "index": 8,
+      "yaw_deg": 240,
+      "image": "view_240_deg.png"
+    },
+    {
+      "index": 9,
+      "yaw_deg": 270,
+      "image": "view_270_deg.png"
+    },
+    {
+      "index": 10,
+      "yaw_deg": 300,
+      "image": "view_300_deg.png"
+    },
+    {
+      "index": 11,
+      "yaw_deg": 330,
+      "image": "view_330_deg.png"
+    }
+  ]
+}

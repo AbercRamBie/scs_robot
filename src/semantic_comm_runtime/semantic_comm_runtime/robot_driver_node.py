@@ -56,6 +56,14 @@ class ThreeWheelRobotDriver(Node):
         # Publish ultrasonic distance (mm) read from Arduino serial stream
         self.ultrasonic_pub = self.create_publisher(Int32, '/ultrasonic/distance', 10)
         self._serial_rx_buffer = bytearray()
+        self._diag_total_bytes = 0
+        self._diag_ascii_bytes = 0
+        self._diag_frames = 0
+        self._diag_last_log_time = time.monotonic()
+        self._diag_last_total_bytes = 0
+        self._diag_last_ascii_bytes = 0
+        self._diag_last_frames = 0
+        self._diag_last_sample_hex = ''
         self.serial_poll_timer = self.create_timer(0.1, self._poll_serial_feedback)
 
         self.get_logger().info('Three-wheel robot driver ready')
@@ -99,6 +107,10 @@ class ThreeWheelRobotDriver(Node):
             if waiting <= 0:
                 return
             raw = self.ser.read(waiting)
+            self._diag_total_bytes += len(raw)
+            self._diag_ascii_bytes += sum(1 for b in raw if 32 <= b <= 126 or b in (9, 10, 13))
+            if raw:
+                self._diag_last_sample_hex = raw[:24].hex(' ')
             self._serial_rx_buffer.extend(raw)
 
             # Process complete newline-terminated records only.
@@ -120,11 +132,33 @@ class ThreeWheelRobotDriver(Node):
                         self.ultrasonic_pub.publish(msg)
                         self.get_logger().info(f'Ultrasonic parsed: {dist_mm} mm')
                         continue
+                    self._diag_frames += 1
                     self.get_logger().info(f'Arduino: {line_text}')
                     continue
 
                 # If not text, print the binary frame in hex so protocol can be decoded.
+                self._diag_frames += 1
                 self.get_logger().info(f'Arduino binary frame: {line_bytes.hex(" ")}')
+
+            now = time.monotonic()
+            if now - self._diag_last_log_time >= 2.0:
+                dt = now - self._diag_last_log_time
+                bytes_delta = self._diag_total_bytes - self._diag_last_total_bytes
+                ascii_delta = self._diag_ascii_bytes - self._diag_last_ascii_bytes
+                frames_delta = self._diag_frames - self._diag_last_frames
+                ascii_pct = (100.0 * ascii_delta / bytes_delta) if bytes_delta else 0.0
+                self.get_logger().info(
+                    'Serial diag: '
+                    f'{bytes_delta / dt:.1f} B/s, '
+                    f'ascii={ascii_pct:.1f}%, '
+                    f'frames={frames_delta / dt:.1f}/s, '
+                    f'buffer={len(self._serial_rx_buffer)} B, '
+                    f'sample={self._diag_last_sample_hex}'
+                )
+                self._diag_last_log_time = now
+                self._diag_last_total_bytes = self._diag_total_bytes
+                self._diag_last_ascii_bytes = self._diag_ascii_bytes
+                self._diag_last_frames = self._diag_frames
         except Exception as e:
             self.get_logger().warn(f'Serial read failed: {e}')
     
