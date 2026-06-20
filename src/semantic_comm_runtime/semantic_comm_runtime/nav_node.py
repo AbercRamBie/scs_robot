@@ -3,7 +3,6 @@ from rclpy.node import Node
 from std_msgs.msg import Int32
 from geometry_msgs.msg import Twist
 
-
 class NavNode(Node):
 
     def __init__(self):

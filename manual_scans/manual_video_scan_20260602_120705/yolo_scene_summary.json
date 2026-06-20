@@ -1,0 +1,221 @@
+{
+  "scan_type": "yolo_360_video_semantic_summary",
+  "source_video": "full_circle_video.avi",
+  "model": "yolo26n-seg.pt",
+  "confidence_threshold": 0.5,
+  "frame_skip": 5,
+  "output_fps": 6,
+  "total_video_frames": 99,
+  "processed_frames": 20,
+  "angle_method": "frame_index_based_estimation",
+  "origin_reference": {
+    "frame_id": "map",
+    "yaw_offset_deg": 0.0,
+    "used_metadata": true
+  },
+  "note": "Relative yaw is estimated assuming the video covers one full 360 degree rotation from start to end. World yaw adds origin yaw offset.",
+  "object_frequency_global": {},
+  "direction_summary": {},
+  "frames": [
+    {
+      "frame_index": 0,
+      "estimated_yaw_deg_relative": 0.0,
+      "estimated_yaw_deg_world": 0.0,
+      "direction_relative": "front",
+      "direction_world": "front",
+      "origin_frame_id": "map",
+      "objects": [],
+      "detections": []
+    },
+    {
+      "frame_index": 5,
+      "estimated_yaw_deg_relative": 18.18,
+      "estimated_yaw_deg_world": 18.18,
+      "direction_relative": "front",
+      "direction_world": "front",
+      "origin_frame_id": "map",
+      "objects": [],
+      "detections": []
+    },
+    {
+      "frame_index": 10,
+      "estimated_yaw_deg_relative": 36.36,
+      "estimated_yaw_deg_world": 36.36,
+      "direction_relative": "front_right",
+      "direction_world": "front_right",
+      "origin_frame_id": "map",
+      "objects": [],
+      "detections": []
+    },
+    {
+      "frame_index": 15,
+      "estimated_yaw_deg_relative": 54.55,
+      "estimated_yaw_deg_world": 54.55,
+      "direction_relative": "front_right",
+      "direction_world": "front_right",
+      "origin_frame_id": "map",
+      "objects": [],
+      "detections": []
+    },
+    {
+      "frame_index": 20,
+      "estimated_yaw_deg_relative": 72.73,
+      "estimated_yaw_deg_world": 72.73,
+      "direction_relative": "right",
+      "direction_world": "right",
+      "origin_frame_id": "map",
+      "objects": [],
+      "detections": []
+    },
+    {
+      "frame_index": 25,
+      "estimated_yaw_deg_relative": 90.91,
+      "estimated_yaw_deg_world": 90.91,
+      "direction_relative": "right",
+      "direction_world": "right",
+      "origin_frame_id": "map",
+      "objects": [],
+      "detections": []
+    },
+    {
+      "frame_index": 30,
+      "estimated_yaw_deg_relative": 109.09,
+      "estimated_yaw_deg_world": 109.09,
+      "direction_relative": "right",
+      "direction_world": "right",
+      "origin_frame_id": "map",
+      "objects": [],
+      "detections": []
+    },
+    {
+      "frame_index": 35,
+      "estimated_yaw_deg_relative": 127.27,
+      "estimated_yaw_deg_world": 127.27,
+      "direction_relative": "back_right",
+      "direction_world": "back_right",
+      "origin_frame_id": "map",
+      "objects": [],
+      "detections": []
+    },
+    {
+      "frame_index": 40,
+      "estimated_yaw_deg_relative": 145.45,
+      "estimated_yaw_deg_world": 145.45,
+      "direction_relative": "back_right",
+      "direction_world": "back_right",
+      "origin_frame_id": "map",
+      "objects": [],
+      "detections": []
+    },
+    {
+      "frame_index": 45,
+      "estimated_yaw_deg_relative": 163.64,
+      "estimated_yaw_deg_world": 163.64,
+      "direction_relative": "back",
+      "direction_world": "back",
+      "origin_frame_id": "map",
+      "objects": [],
+      "detections": []
+    },
+    {
+      "frame_index": 50,
+      "estimated_yaw_deg_relative": 181.82,
+      "estimated_yaw_deg_world": 181.82,
+      "direction_relative": "back",
+      "direction_world": "back",
+      "origin_frame_id": "map",
+      "objects": [],
+      "detections": []
+    },
+    {
+      "frame_index": 55,
+      "estimated_yaw_deg_relative": 200.0,
+      "estimated_yaw_deg_world": 200.0,
+      "direction_relative": "back",
+      "direction_world": "back",
+      "origin_frame_id": "map",
+      "objects": [],
+      "detections": []
+    },
+    {
+      "frame_index": 60,
+      "estimated_yaw_deg_relative": 218.18,
+      "estimated_yaw_deg_world": 218.18,
+      "direction_relative": "back_left",
+      "direction_world": "back_left",
+      "origin_frame_id": "map",
+      "objects": [],
+      "detections": []
+    },
+    {
+      "frame_index": 65,
+      "estimated_yaw_deg_relative": 236.36,
+      "estimated_yaw_deg_world": 236.36,
+      "direction_relative": "back_left",
+      "direction_world": "back_left",
+      "origin_frame_id": "map",
+      "objects": [],
+      "detections": []
+    },
+    {
+      "frame_index": 70,
+      "estimated_yaw_deg_relative": 254.55,
+      "estimated_yaw_deg_world": 254.55,
+      "direction_relative": "left",
+      "direction_world": "left",
+      "origin_frame_id": "map",
+      "objects": [],
+      "detections": []
+    },
+    {
+      "frame_index": 75,
+      "estimated_yaw_deg_relative": 272.73,
+      "estimated_yaw_deg_world": 272.73,
+      "direction_relative": "left",
+      "direction_world": "left",
+      "origin_frame_id": "map",
+      "objects": [],
+      "detections": []
+    },
+    {
+      "frame_index": 80,
+      "estimated_yaw_deg_relative": 290.91,
+      "estimated_yaw_deg_world": 290.91,
+      "direction_relative": "left",
+      "direction_world": "left",
+      "origin_frame_id": "map",
+      "objects": [],
+      "detections": []
+    },
+    {
+      "frame_index": 85,
+      "estimated_yaw_deg_relative": 309.09,
+      "estimated_yaw_deg_world": 309.09,
+      "direction_relative": "front_left",
+      "direction_world": "front_left",
+      "origin_frame_id": "map",
+      "objects": [],
+      "detections": []
+    },
+    {
+      "frame_index": 90,
+      "estimated_yaw_deg_relative": 327.27,
+      "estimated_yaw_deg_world": 327.27,
+      "direction_relative": "front_left",
+      "direction_world": "front_left",
+      "origin_frame_id": "map",
+      "objects": [],
+      "detections": []
+    },
+    {
+      "frame_index": 95,
+      "estimated_yaw_deg_relative": 345.45,
+      "estimated_yaw_deg_world": 345.45,
+      "direction_relative": "front",
+      "direction_world": "front",
+      "origin_frame_id": "map",
+      "objects": [],
+      "detections": []
+    }
+  ]
+}

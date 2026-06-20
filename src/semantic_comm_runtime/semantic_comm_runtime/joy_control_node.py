@@ -67,14 +67,12 @@ class JoyControlNode(Node):
         cmd.angular.z = angular * self.scale_angular
         self.pub.publish(cmd)
 
-
 def main(args=None):
     rclpy.init(args=args)
     node = JoyControlNode()
     rclpy.spin(node)
     node.destroy_node()
     rclpy.shutdown()
-
 
 if __name__ == '__main__':
     main()

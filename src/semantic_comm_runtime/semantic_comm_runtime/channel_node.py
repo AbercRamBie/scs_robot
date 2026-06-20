@@ -3,7 +3,6 @@ from rclpy.node import Node
 from std_msgs.msg import Float32MultiArray
 import numpy as np
 
-
 class ChannelNode(Node):
 
     def __init__(self):

@@ -1,13 +1,57 @@
 # How to Run the Robot (Obstacle Avoidance)
 
-The pipeline is:
+## Fast Start: Full Integration Bring-Up
+
+If your goal is to get the whole robot pipeline running first and improve pieces later,
+use the integrated launch file below.
+
+```bash
+cd ~/DiskD/RoboticsWorks/scs_robot
+colcon build --packages-select semantic_comm_core semantic_comm_runtime
+source install/setup.bash
+
+ros2 launch semantic_comm_runtime robot.launch.py \
+  robot_serial_port:=/dev/ttyUSB0 \
+  camera_id:=0 \
+  enable_robot_driver:=true \
+  enable_vision:=true \
+  enable_startup_scan:=true \
+  enable_semantic_stack:=true \
+  enable_nav:=true \
+  autonomy_start_delay_sec:=40.0
+```
+
+What this gives you in one command:
+- Starts robot serial driver for wheel commands.
+- Runs startup scan spin trigger + vision capture/processing.
+- Starts semantic encoder/channel/decoder stack.
+- Starts nav node to convert decisions into cmd_vel.
+
+If you want the semantic stack to start immediately (no delay), set:
+
+```bash
+autonomy_start_delay_sec:=0.0
+```
+
+If you only want startup scan + vision + robot driver initially:
+
+```bash
+ros2 launch semantic_comm_runtime robot.launch.py \
+  enable_semantic_stack:=false \
+  enable_nav:=false
+```
+
+Default integrated runtime pipeline is:
 
 ```
-Camera → vision_node → [obstacle_node] → nav_node → robot_driver_node → Arduino → Motors
+Lidar /scan → encoder_node → channel_node → decoder_node → nav_node → robot_driver_node → Arduino → Motors
+
+Startup scan path at launch:
+startup_scan_node → vision_node (record + YOLO summary) → /vision/yolo_done
 ```
 
-> `obstacle_node` does not exist yet. You need to create it or wire your own vision code into `/semantic/decision`.  
-> See the **Architecture** section at the bottom for what each node publishes.
+> `vision_node` currently produces scan artifacts and YOLO summaries, not `/semantic/decision`.
+> Navigation decisions are currently driven by the semantic stack (decoder) or by your own publisher to `/semantic/decision`.
 
 ---
 

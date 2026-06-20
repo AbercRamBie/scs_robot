@@ -1,0 +1,488 @@
+{
+  "scan_type": "yolo_360_video_semantic_summary",
+  "source_video": "full_circle_video.avi",
+  "model": "yolo26n-seg.pt",
+  "confidence_threshold": 0.5,
+  "frame_skip": 5,
+  "output_fps": 6,
+  "total_video_frames": 135,
+  "processed_frames": 27,
+  "angle_method": "frame_index_based_estimation",
+  "origin_reference": {
+    "frame_id": "map",
+    "yaw_offset_deg": 0.0,
+    "used_metadata": true
+  },
+  "note": "Relative yaw is estimated assuming the video covers one full 360 degree rotation from start to end. World yaw adds origin yaw offset.",
+  "object_frequency_global": {
+    "person": 23,
+    "tv": 3
+  },
+  "direction_summary": {
+    "front": {
+      "person": 2,
+      "tv": 2
+    },
+    "front_right": {
+      "person": 4
+    },
+    "right": {
+      "person": 3
+    },
+    "back_right": {
+      "person": 3,
+      "tv": 1
+    },
+    "back": {
+      "person": 6
+    },
+    "back_left": {
+      "person": 3
+    },
+    "left": {
+      "person": 2
+    }
+  },
+  "frames": [
+    {
+      "frame_index": 0,
+      "estimated_yaw_deg_relative": 0.0,
+      "estimated_yaw_deg_world": 0.0,
+      "direction_relative": "front",
+      "direction_world": "front",
+      "origin_frame_id": "map",
+      "objects": [
+        "person",
+        "tv"
+      ],
+      "detections": [
+        {
+          "class_name": "person",
+          "confidence": 0.843
+        },
+        {
+          "class_name": "tv",
+          "confidence": 0.504
+        }
+      ]
+    },
+    {
+      "frame_index": 5,
+      "estimated_yaw_deg_relative": 13.33,
+      "estimated_yaw_deg_world": 13.33,
+      "direction_relative": "front",
+      "direction_world": "front",
+      "origin_frame_id": "map",
+      "objects": [
+        "person",
+        "tv"
+      ],
+      "detections": [
+        {
+          "class_name": "person",
+          "confidence": 0.851
+        },
+        {
+          "class_name": "tv",
+          "confidence": 0.528
+        }
+      ]
+    },
+    {
+      "frame_index": 10,
+      "estimated_yaw_deg_relative": 26.67,
+      "estimated_yaw_deg_world": 26.67,
+      "direction_relative": "front_right",
+      "direction_world": "front_right",
+      "origin_frame_id": "map",
+      "objects": [
+        "person"
+      ],
+      "detections": [
+        {
+          "class_name": "person",
+          "confidence": 0.874
+        }
+      ]
+    },
+    {
+      "frame_index": 15,
+      "estimated_yaw_deg_relative": 40.0,
+      "estimated_yaw_deg_world": 40.0,
+      "direction_relative": "front_right",
+      "direction_world": "front_right",
+      "origin_frame_id": "map",
+      "objects": [
+        "person"
+      ],
+      "detections": [
+        {
+          "class_name": "person",
+          "confidence": 0.826
+        }
+      ]
+    },
+    {
+      "frame_index": 20,
+      "estimated_yaw_deg_relative": 53.33,
+      "estimated_yaw_deg_world": 53.33,
+      "direction_relative": "front_right",
+      "direction_world": "front_right",
+      "origin_frame_id": "map",
+      "objects": [
+        "person"
+      ],
+      "detections": [
+        {
+          "class_name": "person",
+          "confidence": 0.813
+        }
+      ]
+    },
+    {
+      "frame_index": 25,
+      "estimated_yaw_deg_relative": 66.67,
+      "estimated_yaw_deg_world": 66.67,
+      "direction_relative": "front_right",
+      "direction_world": "front_right",
+      "origin_frame_id": "map",
+      "objects": [
+        "person"
+      ],
+      "detections": [
+        {
+          "class_name": "person",
+          "confidence": 0.834
+        }
+      ]
+    },
+    {
+      "frame_index": 30,
+      "estimated_yaw_deg_relative": 80.0,
+      "estimated_yaw_deg_world": 80.0,
+      "direction_relative": "right",
+      "direction_world": "right",
+      "origin_frame_id": "map",
+      "objects": [
+        "person"
+      ],
+      "detections": [
+        {
+          "class_name": "person",
+          "confidence": 0.807
+        }
+      ]
+    },
+    {
+      "frame_index": 35,
+      "estimated_yaw_deg_relative": 93.33,
+      "estimated_yaw_deg_world": 93.33,
+      "direction_relative": "right",
+      "direction_world": "right",
+      "origin_frame_id": "map",
+      "objects": [
+        "person"
+      ],
+      "detections": [
+        {
+          "class_name": "person",
+          "confidence": 0.849
+        }
+      ]
+    },
+    {
+      "frame_index": 40,
+      "estimated_yaw_deg_relative": 106.67,
+      "estimated_yaw_deg_world": 106.67,
+      "direction_relative": "right",
+      "direction_world": "right",
+      "origin_frame_id": "map",
+      "objects": [
+        "person"
+      ],
+      "detections": [
+        {
+          "class_name": "person",
+          "confidence": 0.882
+        }
+      ]
+    },
+    {
+      "frame_index": 45,
+      "estimated_yaw_deg_relative": 120.0,
+      "estimated_yaw_deg_world": 120.0,
+      "direction_relative": "back_right",
+      "direction_world": "back_right",
+      "origin_frame_id": "map",
+      "objects": [
+        "person",
+        "tv"
+      ],
+      "detections": [
+        {
+          "class_name": "person",
+          "confidence": 0.882
+        },
+        {
+          "class_name": "tv",
+          "confidence": 0.518
+        }
+      ]
+    },
+    {
+      "frame_index": 50,
+      "estimated_yaw_deg_relative": 133.33,
+      "estimated_yaw_deg_world": 133.33,
+      "direction_relative": "back_right",
+      "direction_world": "back_right",
+      "origin_frame_id": "map",
+      "objects": [
+        "person"
+      ],
+      "detections": [
+        {
+          "class_name": "person",
+          "confidence": 0.867
+        }
+      ]
+    },
+    {
+      "frame_index": 55,
+      "estimated_yaw_deg_relative": 146.67,
+      "estimated_yaw_deg_world": 146.67,
+      "direction_relative": "back_right",
+      "direction_world": "back_right",
+      "origin_frame_id": "map",
+      "objects": [
+        "person"
+      ],
+      "detections": [
+        {
+          "class_name": "person",
+          "confidence": 0.766
+        }
+      ]
+    },
+    {
+      "frame_index": 60,
+      "estimated_yaw_deg_relative": 160.0,
+      "estimated_yaw_deg_world": 160.0,
+      "direction_relative": "back",
+      "direction_world": "back",
+      "origin_frame_id": "map",
+      "objects": [
+        "person"
+      ],
+      "detections": [
+        {
+          "class_name": "person",
+          "confidence": 0.849
+        }
+      ]
+    },
+    {
+      "frame_index": 65,
+      "estimated_yaw_deg_relative": 173.33,
+      "estimated_yaw_deg_world": 173.33,
+      "direction_relative": "back",
+      "direction_world": "back",
+      "origin_frame_id": "map",
+      "objects": [
+        "person"
+      ],
+      "detections": [
+        {
+          "class_name": "person",
+          "confidence": 0.835
+        }
+      ]
+    },
+    {
+      "frame_index": 70,
+      "estimated_yaw_deg_relative": 186.67,
+      "estimated_yaw_deg_world": 186.67,
+      "direction_relative": "back",
+      "direction_world": "back",
+      "origin_frame_id": "map",
+      "objects": [
+        "person"
+      ],
+      "detections": [
+        {
+          "class_name": "person",
+          "confidence": 0.627
+        },
+        {
+          "class_name": "person",
+          "confidence": 0.543
+        }
+      ]
+    },
+    {
+      "frame_index": 75,
+      "estimated_yaw_deg_relative": 200.0,
+      "estimated_yaw_deg_world": 200.0,
+      "direction_relative": "back",
+      "direction_world": "back",
+      "origin_frame_id": "map",
+      "objects": [
+        "person"
+      ],
+      "detections": [
+        {
+          "class_name": "person",
+          "confidence": 0.736
+        },
+        {
+          "class_name": "person",
+          "confidence": 0.507
+        }
+      ]
+    },
+    {
+      "frame_index": 80,
+      "estimated_yaw_deg_relative": 213.33,
+      "estimated_yaw_deg_world": 213.33,
+      "direction_relative": "back_left",
+      "direction_world": "back_left",
+      "origin_frame_id": "map",
+      "objects": [
+        "person"
+      ],
+      "detections": [
+        {
+          "class_name": "person",
+          "confidence": 0.84
+        }
+      ]
+    },
+    {
+      "frame_index": 85,
+      "estimated_yaw_deg_relative": 226.67,
+      "estimated_yaw_deg_world": 226.67,
+      "direction_relative": "back_left",
+      "direction_world": "back_left",
+      "origin_frame_id": "map",
+      "objects": [
+        "person"
+      ],
+      "detections": [
+        {
+          "class_name": "person",
+          "confidence": 0.791
+        }
+      ]
+    },
+    {
+      "frame_index": 90,
+      "estimated_yaw_deg_relative": 240.0,
+      "estimated_yaw_deg_world": 240.0,
+      "direction_relative": "back_left",
+      "direction_world": "back_left",
+      "origin_frame_id": "map",
+      "objects": [
+        "person"
+      ],
+      "detections": [
+        {
+          "class_name": "person",
+          "confidence": 0.947
+        }
+      ]
+    },
+    {
+      "frame_index": 95,
+      "estimated_yaw_deg_relative": 253.33,
+      "estimated_yaw_deg_world": 253.33,
+      "direction_relative": "left",
+      "direction_world": "left",
+      "origin_frame_id": "map",
+      "objects": [
+        "person"
+      ],
+      "detections": [
+        {
+          "class_name": "person",
+          "confidence": 0.891
+        }
+      ]
+    },
+    {
+      "frame_index": 100,
+      "estimated_yaw_deg_relative": 266.67,
+      "estimated_yaw_deg_world": 266.67,
+      "direction_relative": "left",
+      "direction_world": "left",
+      "origin_frame_id": "map",
+      "objects": [
+        "person"
+      ],
+      "detections": [
+        {
+          "class_name": "person",
+          "confidence": 0.571
+        }
+      ]
+    },
+    {
+      "frame_index": 105,
+      "estimated_yaw_deg_relative": 280.0,
+      "estimated_yaw_deg_world": 280.0,
+      "direction_relative": "left",
+      "direction_world": "left",
+      "origin_frame_id": "map",
+      "objects": [],
+      "detections": []
+    },
+    {
+      "frame_index": 110,
+      "estimated_yaw_deg_relative": 293.33,
+      "estimated_yaw_deg_world": 293.33,
+      "direction_relative": "front_left",
+      "direction_world": "front_left",
+      "origin_frame_id": "map",
+      "objects": [],
+      "detections": []
+    },
+    {
+      "frame_index": 115,
+      "estimated_yaw_deg_relative": 306.67,
+      "estimated_yaw_deg_world": 306.67,
+      "direction_relative": "front_left",
+      "direction_world": "front_left",
+      "origin_frame_id": "map",
+      "objects": [],
+      "detections": []
+    },
+    {
+      "frame_index": 120,
+      "estimated_yaw_deg_relative": 320.0,
+      "estimated_yaw_deg_world": 320.0,
+      "direction_relative": "front_left",
+      "direction_world": "front_left",
+      "origin_frame_id": "map",
+      "objects": [],
+      "detections": []
+    },
+    {
+      "frame_index": 125,
+      "estimated_yaw_deg_relative": 333.33,
+      "estimated_yaw_deg_world": 333.33,
+      "direction_relative": "front_left",
+      "direction_world": "front_left",
+      "origin_frame_id": "map",
+      "objects": [],
+      "detections": []
+    },
+    {
+      "frame_index": 130,
+      "estimated_yaw_deg_relative": 346.67,
+      "estimated_yaw_deg_world": 346.67,
+      "direction_relative": "front",
+      "direction_world": "front",
+      "origin_frame_id": "map",
+      "objects": [],
+      "detections": []
+    }
+  ]
+}

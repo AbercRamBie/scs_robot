@@ -1,5 +1,6 @@
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
+from launch.actions import TimerAction
 from launch.conditions import IfCondition
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
@@ -25,10 +26,50 @@ def generate_launch_description():
         default_value='0',
         description='Camera device index for vision_node',
     )
-    show_debug_windows_arg = DeclareLaunchArgument(
-        'show_debug_windows',
+    camera_device_arg = DeclareLaunchArgument(
+        'camera_device',
+        default_value='',
+        description='Optional camera device path such as /dev/video0',
+    )
+    show_recording_preview_arg = DeclareLaunchArgument(
+        'show_recording_preview',
         default_value='false',
-        description='Open OpenCV debug windows for vision_node',
+        description='Show OpenCV preview while recording startup scan',
+    )
+    show_processing_preview_arg = DeclareLaunchArgument(
+        'show_processing_preview',
+        default_value='false',
+        description='Show OpenCV preview during YOLO post-processing',
+    )
+    process_after_recording_arg = DeclareLaunchArgument(
+        'process_after_recording',
+        default_value='true',
+        description='Run YOLO processing after startup scan recording',
+    )
+    enable_startup_scan_arg = DeclareLaunchArgument(
+        'enable_startup_scan',
+        default_value='true',
+        description='Run startup_scan_node to trigger one 360 scan at startup',
+    )
+    startup_delay_sec_arg = DeclareLaunchArgument(
+        'startup_delay_sec',
+        default_value='2.0',
+        description='Delay before startup scan motion begins',
+    )
+    startup_spin_duration_sec_arg = DeclareLaunchArgument(
+        'startup_spin_duration_sec',
+        default_value='20.0',
+        description='Startup scan spin duration in seconds',
+    )
+    startup_angular_speed_z_arg = DeclareLaunchArgument(
+        'startup_angular_speed_z',
+        default_value='0.314',
+        description='Angular velocity for startup scan spin (rad/s)',
+    )
+    autonomy_start_delay_sec_arg = DeclareLaunchArgument(
+        'autonomy_start_delay_sec',
+        default_value='0.0',
+        description='Delay (seconds) before starting nav + semantic stack after launch',
     )
     enable_vision_arg = DeclareLaunchArgument(
         'enable_vision',
@@ -47,8 +88,8 @@ def generate_launch_description():
     )
     enable_semantic_stack_arg = DeclareLaunchArgument(
         'enable_semantic_stack',
-        default_value='false',
-        description='Start encoder/channel/decoder stack; this currently expects /scan input',
+        default_value='true',
+        description='Start encoder/channel/decoder stack (expects /scan input)',
     )
     snr_db_arg = DeclareLaunchArgument(
         'snr_db',
@@ -65,7 +106,25 @@ def generate_launch_description():
         parameters=[
             {
                 'camera_id': LaunchConfiguration('camera_id'),
-                'show_debug_windows': LaunchConfiguration('show_debug_windows'),
+                'camera_device': LaunchConfiguration('camera_device'),
+                'process_after_recording': LaunchConfiguration('process_after_recording'),
+                'show_recording_preview': LaunchConfiguration('show_recording_preview'),
+                'show_processing_preview': LaunchConfiguration('show_processing_preview'),
+            }
+        ],
+    )
+
+    startup_scan = Node(
+        package='semantic_comm_runtime',
+        executable='startup_scan_node',
+        name='startup_scan_node',
+        output='screen',
+        condition=IfCondition(LaunchConfiguration('enable_startup_scan')),
+        parameters=[
+            {
+                'start_delay_sec': LaunchConfiguration('startup_delay_sec'),
+                'spin_duration_sec': LaunchConfiguration('startup_spin_duration_sec'),
+                'angular_speed_z': LaunchConfiguration('startup_angular_speed_z'),
             }
         ],
     )
@@ -119,20 +178,31 @@ def generate_launch_description():
         parameters=[runtime_config],
     )
 
+    delayed_autonomy = TimerAction(
+        period=LaunchConfiguration('autonomy_start_delay_sec'),
+        actions=[nav, encoder, channel, decoder],
+    )
+
     return LaunchDescription([
         robot_serial_port_arg,
         robot_serial_baud_arg,
         camera_id_arg,
-        show_debug_windows_arg,
+        camera_device_arg,
+        show_recording_preview_arg,
+        show_processing_preview_arg,
+        process_after_recording_arg,
+        enable_startup_scan_arg,
+        startup_delay_sec_arg,
+        startup_spin_duration_sec_arg,
+        startup_angular_speed_z_arg,
+        autonomy_start_delay_sec_arg,
         enable_vision_arg,
         enable_nav_arg,
         enable_robot_driver_arg,
         enable_semantic_stack_arg,
         snr_db_arg,
         vision,
-        nav,
+        startup_scan,
         robot_driver,
-        encoder,
-        channel,
-        decoder,
+        delayed_autonomy,
     ])

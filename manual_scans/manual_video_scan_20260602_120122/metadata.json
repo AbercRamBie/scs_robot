@@ -1,0 +1,51 @@
+{
+  "scan_type": "robot_motor_360_video_capture",
+  "video_file": "full_circle_video.avi",
+  "frame_angle_log": "frame_angles.json",
+  "frames_dir": "frames",
+  "save_angle_frames": true,
+  "frame_save_angle_step_deg": 30,
+  "saved_angle_frames": [
+    {
+      "yaw_deg": 0,
+      "frame_index": 0,
+      "time_sec": 0.064,
+      "image": "frames/frame_000_deg.png"
+    },
+    {
+      "yaw_deg": 30,
+      "frame_index": 26,
+      "time_sec": 1.72,
+      "image": "frames/frame_030_deg.png"
+    },
+    {
+      "yaw_deg": 60,
+      "frame_index": 52,
+      "time_sec": 3.38,
+      "image": "frames/frame_060_deg.png"
+    }
+  ],
+  "frame_width": 640,
+  "frame_height": 480,
+  "fps": 20,
+  "frame_count": 68,
+  "target_rotation_time_sec": 20.0,
+  "max_recording_time_sec": 25.0,
+  "actual_recording_duration_sec": 4.337,
+  "angle_estimation_method": "time_based_estimation",
+  "rotation_note": "estimated yaw assumes constant motor rotation speed",
+  "stopped_by_startup_node": true,
+  "stopped_by_timeout": false,
+  "stopped_manually": false,
+  "origin_reference": {
+    "frame_id": "map",
+    "position_m": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "yaw_deg": 0.0,
+    "note": "Scan starts at this user-defined origin pose.",
+    "source": "user_parameter"
+  }
+}

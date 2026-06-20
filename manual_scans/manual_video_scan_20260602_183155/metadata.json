@@ -1,0 +1,105 @@
+{
+  "scan_type": "robot_motor_360_video_capture",
+  "video_file": "full_circle_video.avi",
+  "frame_angle_log": "frame_angles.json",
+  "frames_dir": "frames",
+  "save_angle_frames": true,
+  "frame_save_angle_step_deg": 30,
+  "saved_angle_frames": [
+    {
+      "yaw_deg": 0,
+      "frame_index": 0,
+      "time_sec": 0.025,
+      "image": "frames/frame_000_deg.png"
+    },
+    {
+      "yaw_deg": 30,
+      "frame_index": 28,
+      "time_sec": 1.703,
+      "image": "frames/frame_030_deg.png"
+    },
+    {
+      "yaw_deg": 60,
+      "frame_index": 61,
+      "time_sec": 3.353,
+      "image": "frames/frame_060_deg.png"
+    },
+    {
+      "yaw_deg": 90,
+      "frame_index": 94,
+      "time_sec": 5.003,
+      "image": "frames/frame_090_deg.png"
+    },
+    {
+      "yaw_deg": 120,
+      "frame_index": 128,
+      "time_sec": 6.703,
+      "image": "frames/frame_120_deg.png"
+    },
+    {
+      "yaw_deg": 150,
+      "frame_index": 161,
+      "time_sec": 8.353,
+      "image": "frames/frame_150_deg.png"
+    },
+    {
+      "yaw_deg": 180,
+      "frame_index": 194,
+      "time_sec": 10.002,
+      "image": "frames/frame_180_deg.png"
+    },
+    {
+      "yaw_deg": 210,
+      "frame_index": 228,
+      "time_sec": 11.703,
+      "image": "frames/frame_210_deg.png"
+    },
+    {
+      "yaw_deg": 240,
+      "frame_index": 261,
+      "time_sec": 13.353,
+      "image": "frames/frame_240_deg.png"
+    },
+    {
+      "yaw_deg": 270,
+      "frame_index": 294,
+      "time_sec": 15.003,
+      "image": "frames/frame_270_deg.png"
+    },
+    {
+      "yaw_deg": 300,
+      "frame_index": 328,
+      "time_sec": 16.702,
+      "image": "frames/frame_300_deg.png"
+    },
+    {
+      "yaw_deg": 330,
+      "frame_index": 361,
+      "time_sec": 18.352,
+      "image": "frames/frame_330_deg.png"
+    }
+  ],
+  "frame_width": 640,
+  "frame_height": 480,
+  "fps": 20,
+  "frame_count": 495,
+  "target_rotation_time_sec": 20.0,
+  "max_recording_time_sec": 25.0,
+  "actual_recording_duration_sec": 25.052,
+  "angle_estimation_method": "time_based_estimation",
+  "rotation_note": "estimated yaw assumes constant motor rotation speed",
+  "stopped_by_startup_node": false,
+  "stopped_by_timeout": true,
+  "stopped_manually": false,
+  "origin_reference": {
+    "frame_id": "map",
+    "position_m": {
+      "x": 0.0,
+      "y": 0.0,
+      "z": 0.0
+    },
+    "yaw_deg": 0.0,
+    "note": "Scan starts at this user-defined origin pose.",
+    "source": "user_parameter"
+  }
+}
