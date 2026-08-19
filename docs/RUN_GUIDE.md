@@ -1,5 +1,38 @@
 # How to Run the Robot (Obstacle Avoidance)
 
+## Run the Omni3WD simulation
+
+The Gazebo launcher uses the Omni3WD model from `src/omnibot_description` and
+its three-wheel ROS 2 controller from `src/omnibot_control`. The model includes
+the LiDAR and three cameras needed by the existing semantic simulation.
+
+```bash
+cd ~/DiskD/RoboticsWorks/scs_robot
+colcon build --packages-select omnibot_control omnibot_description \
+  semantic_comm_core semantic_comm_runtime
+source install/setup.bash
+ros2 launch semantic_comm_runtime sim.launch.py control_mode:=joystick
+```
+
+This opens the Omni3WD robot in `world_citySpace.sdf` by default.
+
+For semantic navigation instead of joystick control:
+
+```bash
+ros2 launch semantic_comm_runtime sim.launch.py control_mode:=semantic
+```
+
+The existing nodes continue publishing `geometry_msgs/Twist` on `/cmd_vel`.
+During simulation, `cmd_vel_stamper_node` converts those commands to the
+`TwistStamped` input expected by `omnibot_controller`.
+
+To use a different world, pass both its path and its internal SDF world name:
+
+```bash
+ros2 launch semantic_comm_runtime sim.launch.py \
+  world_file:=/absolute/path/to/world.sdf world_name:=my_world
+```
+
 ## Fast Start: Full Integration Bring-Up
 
 If your goal is to get the whole robot pipeline running first and improve pieces later,

@@ -2,29 +2,55 @@ from launch import LaunchDescription
 from launch_ros.actions import Node
 from launch.actions import DeclareLaunchArgument, ExecuteProcess, TimerAction
 from launch.conditions import IfCondition
-from launch.substitutions import LaunchConfiguration
-from launch.substitutions import PythonExpression
-from ament_index_python.packages import get_package_share_directory
+from launch.substitutions import Command, LaunchConfiguration, PythonExpression
+from ament_index_python.packages import (
+    get_package_prefix,
+    get_package_share_directory,
+)
+from launch_ros.parameter_descriptions import ParameterValue
 import os
-
-# Ensure the system gz (not ROS vendor gz) is used so the 'sim' subcommand is available.
-# ROS Jazzy ships gz_tools_vendor which only registers: help, log, msg, param, service, topic.
-_GZ_ENV = {
-    'GZ_CONFIG_PATH': '/usr/share/gz',
-    'PATH': '/usr/bin:' + os.environ.get('PATH', ''),
-}
 
 def generate_launch_description():
     share_dir = get_package_share_directory('semantic_comm_runtime')
     runtime_config = os.path.join(share_dir, 'config', 'runtime.yaml')
     joystick_config = os.path.join(share_dir, 'config', 'joyStick.yaml')
+    omnibot_share_dir = get_package_share_directory('omnibot_description')
+    gz_ros2_control_lib_dir = os.path.join(
+        get_package_prefix('gz_ros2_control'), 'lib'
+    )
+    gz_system_plugin_path = os.pathsep.join(filter(None, [
+        gz_ros2_control_lib_dir,
+        os.environ.get('GZ_SIM_SYSTEM_PLUGIN_PATH', ''),
+    ]))
+    default_robot_model = os.path.join(
+        omnibot_share_dir, 'urdf', 'omnibot.xacro'
+    )
+    default_world = os.path.join(
+        share_dir, 'assets', 'world', 'world_citySpace.sdf'
+    )
 
-    robot_sdf = os.path.join(
-        share_dir, 'assets', 'robot', 'semantic_robot.sdf'
+    world_file_arg = DeclareLaunchArgument(
+        'world_file',
+        default_value=default_world,
+        description='Absolute path to the SDF world file'
     )
-    world = os.path.join(
-        share_dir, 'assets', 'world', 'world_Basic.sdf'
+
+    world_name_arg = DeclareLaunchArgument(
+        'world_name',
+        default_value='city_space',
+        description='Internal name from the SDF <world name="..."> element'
     )
+
+    robot_model_arg = DeclareLaunchArgument(
+        'robot_model',
+        default_value=default_robot_model,
+        description='Absolute path to the Omni3WD xacro/URDF model'
+    )
+
+    spawn_x_arg = DeclareLaunchArgument('spawn_x', default_value='2.0')
+    spawn_y_arg = DeclareLaunchArgument('spawn_y', default_value='-18.0')
+    spawn_z_arg = DeclareLaunchArgument('spawn_z', default_value='0.0')
+    spawn_yaw_arg = DeclareLaunchArgument('spawn_yaw', default_value='1.5708')
 
     snr_arg = DeclareLaunchArgument(
         'snr',
@@ -57,28 +83,84 @@ def generate_launch_description():
     )
 
     gazebo = ExecuteProcess(
-        cmd=['/usr/bin/gz', 'sim', world, '-v', '4', '-r'],
+        cmd=['gz', 'sim', '-v', '4', '-r', LaunchConfiguration('world_file')],
         output='screen',
-        additional_env=_GZ_ENV,
+        additional_env={
+            'GZ_SIM_SYSTEM_PLUGIN_PATH': gz_system_plugin_path,
+        },
+    )
+
+    robot_description = ParameterValue(
+        Command(['xacro ', LaunchConfiguration('robot_model')]),
+        value_type=str,
+    )
+
+    robot_state_publisher = Node(
+        package='robot_state_publisher',
+        executable='robot_state_publisher',
+        name='robot_state_publisher',
+        output='screen',
+        parameters=[{
+            'robot_description': robot_description,
+            'use_sim_time': True,
+        }],
     )
 
     spawn_robot = TimerAction(
         period=8.0,
         actions=[
-            ExecuteProcess(
-                cmd=[
-                    '/usr/bin/gz', 'service',
-                    '-s', '/world/semantic_world/create',
-                    '--reqtype', 'gz.msgs.EntityFactory',
-                    '--reptype', 'gz.msgs.Boolean',
-                    '--timeout', '5000',
-                    '--req',
-                    f'sdf_filename: "{robot_sdf}", name: "semantic_robot"'
+            Node(
+                package='ros_gz_sim',
+                executable='create',
+                name='spawn_omnibot',
+                arguments=[
+                    '/clock@rosgraph_msgs/msg/Clock@gz.msgs.Clock',
+                    '/scan@sensor_msgs/msg/LaserScan@gz.msgs.LaserScan',
+                    '-world', LaunchConfiguration('world_name'),
+                    '-topic', 'robot_description',
+                    '-name', 'omnibot',
+                    '-x', LaunchConfiguration('spawn_x'),
+                    '-y', LaunchConfiguration('spawn_y'),
+                    '-z', LaunchConfiguration('spawn_z'),
+                    '-Y', LaunchConfiguration('spawn_yaw'),
                 ],
                 output='screen',
-                additional_env=_GZ_ENV,
             )
         ]
+    )
+
+    controllers = TimerAction(
+        period=12.0,
+        actions=[
+            Node(
+                package='controller_manager',
+                executable='spawner',
+                arguments=[
+                    'joint_state_broadcaster',
+                    '--controller-manager', '/controller_manager',
+                    '--controller-manager-timeout', '30',
+                ],
+                output='screen',
+            ),
+            Node(
+                package='controller_manager',
+                executable='spawner',
+                arguments=[
+                    'omnibot_controller',
+                    '--controller-manager', '/controller_manager',
+                    '--controller-manager-timeout', '30',
+                ],
+                output='screen',
+            ),
+        ],
+    )
+
+    cmd_vel_stamper = Node(
+        package='semantic_comm_runtime',
+        executable='cmd_vel_stamper_node',
+        name='cmd_vel_stamper_node',
+        output='screen',
+        parameters=[{'use_sim_time': True}],
     )
 
     encoder = Node(
@@ -154,19 +236,28 @@ def generate_launch_description():
     name='ros_gz_bridge',
     output='screen',
     arguments=[
-        '/cmd_vel@geometry_msgs/msg/Twist@gz.msgs.Twist',
         '/scan@sensor_msgs/msg/LaserScan@gz.msgs.LaserScan',
     ],
     )
 
     return LaunchDescription([
+        world_file_arg,
+        world_name_arg,
+        robot_model_arg,
+        spawn_x_arg,
+        spawn_y_arg,
+        spawn_z_arg,
+        spawn_yaw_arg,
         snr_arg,
         encoder_checkpoint_arg,
         decoder_checkpoint_arg,
         joy_control_config_arg,
         control_mode_arg,
         gazebo,
+        robot_state_publisher,
         spawn_robot,
+        controllers,
+        cmd_vel_stamper,
         encoder,
         channel,
         decoder,

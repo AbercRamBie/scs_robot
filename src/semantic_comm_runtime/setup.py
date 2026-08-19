@@ -37,6 +37,7 @@ setup(
             'decoder_node = semantic_comm_runtime.decoder_node:main',
             'nav_node     = semantic_comm_runtime.nav_node:main',
             'joy_control_node = semantic_comm_runtime.joy_control_node:main',            
+            'cmd_vel_stamper_node = semantic_comm_runtime.cmd_vel_stamper_node:main',
             'robot_driver_node = semantic_comm_runtime.robot_driver_node:main',        
             'startup_scan_node = semantic_comm_runtime.startup_scan_node:main',
             'vision_node = semantic_comm_runtime.vision_node:main',],
